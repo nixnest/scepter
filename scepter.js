@@ -23,6 +23,12 @@ client.timerData = new Enmap({
   name: 'timers'
 })
 
+client.defaultGuildData = {
+  prefix: 's.'
+}
+
+client.loadedModules = {}
+
 if (!process.env.BOT_GUILD) {
   log.error('No Discord guild ID supplied. Set the BOT_GUILD environment variable.')
 }
@@ -33,15 +39,9 @@ if (!process.env.DISCORD_TOKEN) {
   client.login(process.env.DISCORD_TOKEN)
 }
 
-const defaultGuildData = {
-  prefix: 's.'
-}
-
-const loadedModules = {}
-
 const loadModule = name => {
   const module = require(`./modules/${name}`)
-  loadedModules[name] = module
+  client.loadedModules[name] = module
 }
 
 const parseArgs = messageContent => {
@@ -89,15 +89,15 @@ client.on('ready', async () => {
 })
 
 client.on('message', async message => {
-  await client.guildData.ensure(message.guild.id, defaultGuildData)
+  await client.guildData.ensure(message.guild.id, client.defaultGuildData)
   const prefix = await client.guildData.get(message.guild.id, 'prefix')
   // TODO: manage guild specific aliases here
   // TODO: permission levels
   // TODO: cooldowns
 
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
-    Object.keys(loadedModules).forEach(async moduleIndex => {
-      loadedModules[moduleIndex].commands.forEach(async command => {
+    Object.keys(client.loadedModules).forEach(async moduleIndex => {
+      client.loadedModules[moduleIndex].commands.forEach(async command => {
         const commandName = message.content.split(prefix)[1].split(' ')[0]
         const possibleNames = command.aliases.concat([command.name])
         if (possibleNames.includes(commandName)) {
