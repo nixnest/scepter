@@ -30,7 +30,7 @@ if (!process.env.DISCORD_TOKEN) {
   client.login(process.env.DISCORD_TOKEN)
 }
 
-const defaultGuildSettings = {
+const defaultGuildData = {
   prefix: 's.'
 }
 
@@ -62,8 +62,8 @@ client.on('ready', async () => {
 })
 
 client.on('message', async (message) => {
-  client.guildSettings.ensure(message.guild.id, defaultGuildSettings)
-  const prefix = await client.guildSettings.get(message.guild.id, 'prefix')
+  client.guildData.ensure(message.guild.id, defaultGuildData)
+  const prefix = await client.guildData.get(message.guild.id, 'prefix')
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
     Object.keys(loadedModules).forEach((module) => {
       loadedModules[module].commands.forEach((command) => {
