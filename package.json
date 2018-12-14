@@ -23,6 +23,7 @@
   "dependencies": {
     "better-sqlite-pool": "^0.1.2",
     "discord.js": "^11.4.2",
+    "dotenv": "^6.2.0",
     "enmap": "^4.5.0"
   },
   "devDependencies": {
@@ -33,5 +34,9 @@
     "mocha": "^5.2.0",
     "sinon": "^7.2.2",
     "sinon-chai": "^3.3.0"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.0",
+    "erlpack": "github:hammerandchisel/erlpack"
   }
 }
