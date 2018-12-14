@@ -50,11 +50,11 @@ client.on('ready', async () => {
   log.info(`Logged in as ${client.user.tag}!`, client)
   fs.readdir('./modules/', (err, files) => {
     if (err) {
-      return log.error('Failed to load modules folder')
+      return log.error('Failed to load modules folder', client)
     } else {
       files.forEach(file => {
         const name = file.split('.')[0]
-        log.info(`Loading module ${name}`)
+        log.info(`Loading module ${name}`, client)
         loadModule(name)
       })
     }
