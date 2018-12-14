@@ -9,6 +9,8 @@ const log = require('./lib/log.js')
 
 const client = new Discord.Client()
 
+client.log = log
+
 client.guildData = new Enmap({
   name: 'guilds'
 })
@@ -17,12 +19,14 @@ client.userData = new Enmap({
   name: 'users'
 })
 
-client.muteData = new Enmap({
-  name: 'mutes'
+client.timerData = new Enmap({
+  name: 'timers'
 })
 
+client.loadedModules = {}
+
 if (!process.env.BOT_GUILD) {
-  log.error('No Discord guild ID supplied. Set the DISCORD_GUILD environment variable.')
+  log.error('No Discord guild ID supplied. Set the BOT_GUILD environment variable.')
 }
 
 if (!process.env.DISCORD_TOKEN) {
@@ -31,19 +35,37 @@ if (!process.env.DISCORD_TOKEN) {
   client.login(process.env.DISCORD_TOKEN)
 }
 
-const defaultGuildData = {
-  prefix: 's.'
+const loadModule = name => {
+  const module = require(`./modules/${name}`)
+  client.loadedModules[name] = module
 }
 
-const loadedModules = {}
+const parseArgs = messageContent => {
+  return messageContent.match(/\\?.|^$/g).reduce((p, c) => {
+    if (c === '"') {
+      p.quote ^= 1
+    } else if (!p.quote && c === ' ') {
+      p.a.push('')
+    } else {
+      p.a[p.a.length - 1] += c.replace(/\\(.)/, '$1')
+    }
+    return p
+  }, { a: [''] }).a
+}
 
-// const unloadModule = (name) => {
-//   // TODO
-// }
-
-const loadModule = (name) => {
-  const module = require(`./modules/${name}`)
-  loadedModules[name] = module
+const runCommand = async (message, command, args) => {
+  if (args.length > command.maxArgs) {
+    return message.channel.send(`Too many arguments for \`${command.name}\`. (max: ${command.maxArgs}, you might need to quote an argument) `)
+  } else if (args.length < command.minArgs) {
+    return message.channel.send(`Too few arguments for \`${command.name}\`. (min: ${command.minArgs})`)
+  } else {
+    try {
+      return await command.run(message, args)
+    } catch (e) {
+      await message.channel.send(`Error: \`${e}\``)
+      return log.warn(`\`${command.name} ${args}\` errored with \`${e}\``, message.client)
+    }
+  }
 }
 
 client.on('ready', async () => {
@@ -62,23 +84,21 @@ client.on('ready', async () => {
   })
 })
 
-client.on('message', async (message) => {
-  client.guildData.ensure(message.guild.id, defaultGuildData)
+client.on('message', async message => {
+  await client.guildData.ensure(message.guild.id, { prefix: 's.' })
   const prefix = await client.guildData.get(message.guild.id, 'prefix')
+  // TODO: manage guild specific aliases here
+  // TODO: permission levels
+  // TODO: cooldowns
+
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
-    Object.keys(loadedModules).forEach((module) => {
-      loadedModules[module].commands.forEach((command) => {
-        const name = message.content.split(prefix)[1].split(' ')[0]
-        const matches = command.aliases.concat([command.name])
-        if (matches.includes(name)) {
-          const args = message.content.split(' ').slice(1) // TODO: better arg parsing
-          if (args.length > command.maxArgs) {
-            return message.channel.send(`Too many arguments for \`${prefix}${name}\`. (max: ${command.maxArgs})`)
-          } else if (args.length < command.minArgs) {
-            return message.channel.send(`Too few arguments for \`${prefix}${name}\`. (min: ${command.minArgs})`)
-          } else {
-            return command.run(message, args)
-          }
+    Object.keys(client.loadedModules).forEach(async moduleIndex => {
+      client.loadedModules[moduleIndex].commands.forEach(async command => {
+        const commandName = message.content.split(prefix)[1].split(' ')[0]
+        const possibleNames = command.aliases.concat([command.name])
+        if (possibleNames.includes(commandName)) {
+          const messageContentWithoutPrefixOrCommandName = message.content.substr(prefix.length + 1 + commandName.length)
+          runCommand(message, command, parseArgs(messageContentWithoutPrefixOrCommandName))
         }
       })
     })
