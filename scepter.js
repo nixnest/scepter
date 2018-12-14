@@ -1,5 +1,6 @@
 'use strict'
 
+require('dotenv').config()
 const Discord = require('discord.js')
 const Enmap = require('enmap')
 const fs = require('fs')
