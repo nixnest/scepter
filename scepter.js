@@ -60,6 +60,19 @@ client.on('ready', async () => {
   })
 })
 
+const parseArgs = messageContent => {
+  return messageContent.match(/\\?.|^$/g).reduce((p, c) => {
+    if (c === '"') {
+      p.quote ^= 1
+    } else if (!p.quote && c === ' ') {
+      p.a.push('')
+    } else {
+      p.a[p.a.length - 1] += c.replace(/\\(.)/, '$1')
+    }
+    return p
+  }, { a: [''] }).a.slice(1)
+}
+
 client.on('message', async message => {
   client.guildData.ensure(message.guild.id, defaultGuildData)
   const prefix = await client.guildData.get(message.guild.id, 'prefix')
@@ -69,16 +82,7 @@ client.on('message', async message => {
         const name = message.content.split(prefix)[1].split(' ')[0]
         const matches = command.aliases.concat([command.name])
         if (matches.includes(name)) {
-          const args = message.content.match(/\\?.|^$/g).reduce((p, c) => {
-            if (c === '"') {
-              p.quote ^= 1
-            } else if (!p.quote && c === ' ') {
-              p.a.push('')
-            } else {
-              p.a[p.a.length - 1] += c.replace(/\\(.)/, '$1')
-            }
-            return p
-          }, { a: [''] }).a.slice(1) // split into args but allow quoted strings to stay together
+          const args = parseArgs(message.content)
           if (args.length > command.maxArgs) {
             return message.channel.send(`Too many arguments for \`${prefix}${name}\`. (max: ${command.maxArgs}, you might need to quote an argument) `)
           } else if (args.length < command.minArgs) {
