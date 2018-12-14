@@ -3,14 +3,15 @@ module.exports = {
   commands: [
     {
       name: 'echo',
-      description: 'Takes your input and spits it right back at you.',
-      examples: ['yes'],
-      secret: false,
-      permissionLevel: 0, // 0: anyone, 1: server admins, 2: bot admins
-      aliases: [],
-      cooldown: 0, // per user not server
-      minArgs: 1,
-      maxArgs: Infinity,
+      secret: false, // optional, default false
+      description: 'Takes your input and spits it right back at you.', // required if not secret
+      examples: ['yes'], // required if not secret
+      permissionLevel: 0, // optional, default 0
+                          // 0: anyone, 1: server mods, 2: server admins, 3: bot admins
+      aliases: [], // optional
+      cooldown: 0, // optional, default 0
+      minArgs: 1, // required
+      maxArgs: Infinity, // required
       run: async (message, args) => {
         return message.channel.send(args.join(' '))
       }
