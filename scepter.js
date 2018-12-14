@@ -23,10 +23,6 @@ client.timerData = new Enmap({
   name: 'timers'
 })
 
-client.defaultGuildData = {
-  prefix: 's.'
-}
-
 client.loadedModules = {}
 
 if (!process.env.BOT_GUILD) {
@@ -89,7 +85,7 @@ client.on('ready', async () => {
 })
 
 client.on('message', async message => {
-  await client.guildData.ensure(message.guild.id, client.defaultGuildData)
+  await client.guildData.ensure(message.guild.id, { prefix: 's.' })
   const prefix = await client.guildData.get(message.guild.id, 'prefix')
   // TODO: manage guild specific aliases here
   // TODO: permission levels
