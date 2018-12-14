@@ -8,8 +8,16 @@ const log = require('./lib/log.js')
 
 const client = new Discord.Client()
 
-client.guildSettings = new Enmap({
+client.guildData = new Enmap({
   name: 'guilds'
+})
+
+client.userData = new Enmap({
+  name: 'users'
+})
+
+client.muteData = new Enmap({
+  name: 'mutes'
 })
 
 if (!process.env.BOT_GUILD) {
