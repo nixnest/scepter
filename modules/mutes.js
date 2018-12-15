@@ -1,3 +1,28 @@
+let checkMutes = async (client) => {
+  let mutedRole = async (guild) => {
+    let role = client.guildData.get(`${guild.id}.mutedRole`)
+    if (role == null) {
+      role = guild.roles.find(x => x.name === 'mutes')
+    }
+    return role
+  }
+
+  let curDate = new Date();
+  let clientGuild, guildMember, clientGuildId, guildMemberId
+  for (let entry of client.timerData.entries()) {
+    if (entry[1] === Infinity) continue
+    if (curDate > entry[1]) {  // Unmute the user
+      clientGuildId = entry[0].split('.')[0]
+      guildMemberId = entry[0].split('.')[1]
+      clientGuild = await client.guilds.get(clientGuildId)
+      guildMember = await clientGuild.fetchMember(guildMemberId)
+      mutedRole = await mutedRole(clientGuild)
+      await guildMember.removeRole(mutedRole)
+      delete client.timerData[entry[0]]
+    }
+  }
+}
+
 let setMutedRole = async (message, args) => {
   let roleId = args[0]
   let roleName = message.guild.roles.get(roleId)
@@ -15,7 +40,7 @@ let mute = async (message, args) => {
   let muteTargetId = message.mentions.users.first().id
   let curDate = new Date()
   let mutePeriod = args[1]
-    ? new Date(curDate.setSeconds(curDate.getSeconds() + args[1]))
+    ? new Date(curDate.setSeconds(curDate.getSeconds() + parseInt(args[1])))
     : Infinity
   let muteRole = await message.client.guildData.get(`${message.guild.id}.mutedRole`)
   if (muteRole == null) {
@@ -26,7 +51,7 @@ let mute = async (message, args) => {
   }
   let muteTarget = await message.guild.fetchMember(muteTargetId)
   muteTarget.addRole(muteRole)
-  await message.client.timerData.set(`${muteTargetId}.mutes`, mutePeriod)
+  await message.client.timerData.set(`${message.guild.id}.${muteTargetId}`, mutePeriod)
   let mutePeriodText = mutePeriod === Infinity ? 'indefinitely' : `for ${args[1]} seconds`
   return message.channel.send(`User ${args[0]} has been muted ${mutePeriodText}.`)
 }
@@ -55,6 +80,12 @@ module.exports = {
       maxArgs: 2,
       aliases: [],
       run: mute
+    }
+  ],
+  jobs: [
+    {
+      period: 5,  // In seconds
+      job: checkMutes
     }
   ]
 }
