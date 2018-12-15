@@ -41,6 +41,7 @@ const loadModule = name => {
 }
 
 const parseArgs = messageContent => {
+  if (!messageContent) return []
   return messageContent.match(/\\?.|^$/g).reduce((p, c) => {
     if (c === '"') {
       p.quote ^= 1
