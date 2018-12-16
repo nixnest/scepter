@@ -38,7 +38,12 @@ if (!process.env.DISCORD_TOKEN) {
 const loadModule = name => {
   const module = require(`./modules/${name}`)
   if (module.jobs) {
-    module.jobs.map(x => setInterval(() => x.job(client), x.period * 1000))
+    module.jobs.map(x => {
+      setInterval(() => x.job(client), x.period * 1000)
+      if (x.runInstantly) {
+        x.job(client)
+      }
+    })
   }
   client.loadedModules[name] = module
 }
