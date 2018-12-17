@@ -58,6 +58,14 @@ const parseArgs = messageContent => {
 }
 
 const runCommand = async (message, command, args) => {
+  if (command.cooldown != null) {
+    await client.userData.ensure(`${message.author.id}.cooldowns.${command.name}`, new Date(0))
+    const cooldownExpiryDate = new Date(client.userData.get(`${message.author.id}.cooldowns.${command.name}`))
+    if (cooldownExpiryDate.getTime() > message.createdTimestamp) {
+      return message.channel.send(`This command has a cooldown of ${command.cooldown} seconds. (${new Date(cooldownExpiryDate - Date.now()).getSeconds() + 1} left)`)
+    }
+    await client.userData.set(`${message.author.id}.cooldowns.${command.name}`, new Date(message.createdTimestamp + command.cooldown * 1000))
+  }
   if (args.length > command.maxArgs) {
     return message.channel.send(`Too many arguments for \`${command.name}\`. (max: ${command.maxArgs}, you might need to quote an argument) `)
   } else if (args.length < command.minArgs) {
@@ -93,8 +101,8 @@ client.on('message', async message => {
   const prefix = await client.guildData.get(message.guild.id, 'prefix')
   // TODO: manage guild specific aliases here
   // TODO: permission levels
-  // TODO: cooldowns
 
+  // TODO: iterating over all the modules is SLOW, make a loadedCommands
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
     Object.keys(client.loadedModules).forEach(async moduleIndex => {
       client.loadedModules[moduleIndex].commands.forEach(async command => {
