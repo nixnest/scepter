@@ -104,7 +104,9 @@ client.on('message', async message => {
     Object.keys(client.loadedModules).forEach(async moduleIndex => {
       client.loadedModules[moduleIndex].commands.forEach(async command => {
         const commandName = message.content.split(prefix)[1].split(' ')[0]
-        const possibleNames = command.aliases.concat([command.name])
+        const possibleNames = command.aliases
+          ? command.aliases.concat([command.name])
+          : [command.name]
         if (possibleNames.includes(commandName)) {
           const messageContentWithoutPrefixOrCommandName = message.content.substr(prefix.length + 1 + commandName.length)
           runCommand(message, command, parseArgs(messageContentWithoutPrefixOrCommandName))

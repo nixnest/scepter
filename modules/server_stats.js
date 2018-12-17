@@ -16,8 +16,8 @@ let buildEmbed = async (data) => {
 
 let refreshCache = async (client) => {
   for (let guild of client.guilds) {
-    let clientGuild = guild[1]
-    let guildData = {
+    const clientGuild = guild[1]
+    const guildData = {
       name: clientGuild.name,
       creationDate : clientGuild.createdAt,
       fields: [{
@@ -28,12 +28,11 @@ let refreshCache = async (client) => {
       }]
     }
     await client.guildData.set(`${clientGuild.id}.stats`, guildData)
-    client.log.info('Update server stats', client)
   }
 }
 
 let stats = async (message, _) => {
-  let embedMessage = await buildEmbed(message.client.guildData.get(`${message.guild.id}.stats`))
+  const embedMessage = await buildEmbed(message.client.guildData.get(`${message.guild.id}.stats`))
   return message.channel.send(embedMessage)
 }
 
@@ -44,11 +43,8 @@ module.exports = {
       name: 'stats',
       description: 'Displays server statistics',
       examples: ['stats'],
-      secret: false,
-      permissionLevel: 0,
       minArgs: 0,
       maxArgs: 0,
-      aliases: [],
       run: stats
     }
   ],
