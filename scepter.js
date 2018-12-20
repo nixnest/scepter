@@ -41,6 +41,11 @@ const loadedModules = {}
 
 const loadModule = name => {
   const module = require(`./modules/${name}`)
+  if (module.events != null) {
+    for (let event of module.events) {
+      client.on(event.trigger, event.run)
+    }
+  }
   loadedModules[name] = module
 }
 
