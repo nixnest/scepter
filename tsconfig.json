@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "./build",
+    "allowJs": true,
+    "target": "es6",
+    "moduleResolution": "node",
+    "lib": ["es2017.object", "es6"],
+    "esModuleInterop": true
+  },
+  "include": [
+    "./modules/**/*",
+    "./lib/**/*",
+    "./scepter.ts"
+  ]
+}

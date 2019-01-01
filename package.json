@@ -7,7 +7,8 @@
     "test": "gulp",
     "unit": "gulp unit",
     "style": "gulp style",
-    "fix": "standard --fix"
+    "fix": "standard --fix",
+    "start": "tsc && node build/scepter.js"
   },
   "repository": {
     "type": "git",
@@ -21,10 +22,11 @@
   },
   "homepage": "https://github.com/nixnest/scepter#readme",
   "dependencies": {
+    "@types/node": "^10.12.18",
     "better-sqlite-pool": "^0.1.2",
     "discord.js": "^11.4.2",
     "dotenv": "^6.2.0",
-    "enmap": "^4.5.0",
+    "enmap": "^4.6.0",
     "node-cron": "^2.0.3"
   },
   "devDependencies": {
@@ -34,7 +36,8 @@
     "gulp-standard": "^12.0.0",
     "mocha": "^5.2.0",
     "sinon": "^7.2.2",
-    "sinon-chai": "^3.3.0"
+    "sinon-chai": "^3.3.0",
+    "typescript": "^3.2.2"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.0",
