@@ -6,7 +6,7 @@ export const log = async options => {
   }
   if (options.client) {
     if (options.client.botGuild.available) {
-      let logChannel = await options.client.botGuild.channels.find(val => val.name === 'log')
+      const logChannel = await options.client.botGuild.channels.find(val => val.name === 'log')
       if (!logChannel) {
         warn('No channel named #log in bot guild, failed to log message to Discord.')
       } else {

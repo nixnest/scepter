@@ -1,7 +1,7 @@
 'use strict'
 
-import * as dotenv from 'dotenv'
 import { Client, Message } from 'discord.js'
+import * as dotenv from 'dotenv'
 import Enmap from 'enmap'
 import * as fs from 'fs'
 
@@ -42,22 +42,22 @@ interface Command {
   examples: string[],
   minArgs: number
   maxArgs: number,
-  run(message: Message, args: string[]): Promise<Message>,
   permissionLevel?: number,
   secret?: boolean,
   cooldown?: number,
   aliases?: string[],
+  run (message: Message, args: string[]): Promise<Message>,
 }
 
 interface Event {
   trigger: string,
-  event(object: any): Promise<Message>  // TODO: is this correct? Verify with further examples
+  event (object: any): Promise<Message>  // TODO: is this correct? Verify with further examples
 }
 
 interface Job {
   period: number,
   runInstantly: boolean,
-  job(client: Client): Promise<void>
+  job (client: Client): Promise<void>
 }
 
 interface Module {

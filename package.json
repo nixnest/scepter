@@ -2,7 +2,7 @@
   "name": "scepter",
   "version": "0.0.1",
   "description": "Modular Discord bot",
-  "main": "scepter.js",
+  "main": "build/scepter.js",
   "scripts": {
     "test": "gulp",
     "unit": "gulp unit",
@@ -27,16 +27,19 @@
     "discord.js": "^11.4.2",
     "dotenv": "^6.2.0",
     "enmap": "^4.6.0",
-    "node-cron": "^2.0.3"
+    "node-cron": "^2.0.3",
+    "tslint": "^5.12.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "gulp": "^4.0.0",
     "gulp-mocha": "^6.0.0",
     "gulp-standard": "^12.0.0",
+    "gulp-tslint": "^8.1.3",
     "mocha": "^5.2.0",
     "sinon": "^7.2.2",
     "sinon-chai": "^3.3.0",
+    "tslint-config-standard": "^8.0.1",
     "typescript": "^3.2.2"
   },
   "optionalDependencies": {

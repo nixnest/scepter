@@ -3,12 +3,13 @@
 const gulp = require('gulp')
 const mocha = require('gulp-mocha')
 const standard = require('gulp-standard')
+const tslint = require('gulp-tslint')
 
 const CI = process.env.CI === 'true'
 
 const entrypoint = require('./package.json')['main']
 const paths = {
-  sources: [entrypoint, 'lib/**/*.js'],
+  sources: ['./scepter.ts', 'lib/**/*.ts'],
   gulp: ['./gulpfile.js'],
   tests: ['test/**/*.test.js'],
   testsSetup: ['./test/setup.js']
@@ -18,11 +19,8 @@ const all = Array.prototype.concat.apply([], Object.keys(paths).map(x => paths[x
 
 function style () {
   return gulp.src(all.concat('./gulpfile.js'))
-    .pipe(standard())
-    .pipe(standard.reporter('default', {
-      breakOnError: true,
-      quiet: true
-    }))
+    .pipe(tslint())
+    .pipe(tslint.report())
 }
 
 function unit () {
