@@ -1,8 +1,9 @@
-const Discord = require('discord.js')
+import { Message, Client, RichEmbed, MessageEmbedField } from 'discord.js'
 
 let buildEmbed = async (data) => {
-  let embed = new Discord.RichEmbed()
-  let embedField, embedValue
+  let embed = new RichEmbed()
+  let embedField: [string, {}][] | any[][],
+      embedValue: MessageEmbedField
   embed.setTitle(`Server stats for ${data.name}`)
   data.fields.map(field => {
     embedField = Object.entries(field)
@@ -14,7 +15,7 @@ let buildEmbed = async (data) => {
   return embed
 }
 
-let refreshCache = async (client) => {
+let refreshCache = async (client: Client): Promise<void> => {
   for (let guild of client.guilds) {
     const clientGuild = guild[1]
     const guildData = {
@@ -27,18 +28,17 @@ let refreshCache = async (client) => {
         channels: clientGuild.channels.map(x => [x.id, x.name]),
       }]
     }
-    await client.guildData.set(`${clientGuild.id}.stats`, guildData)
+    await client['guildData'].set(`${clientGuild.id}.stats`, guildData)
   }
 }
 
-let stats = async (message, _) => {
-  const embedMessage = await buildEmbed(message.client.guildData.get(`${message.guild.id}.stats`))
+let stats = async (message: Message, _) => {
+  const embedMessage = await buildEmbed(message.client['guildData'].get(`${message.guild.id}.stats`))
   return message.channel.send(embedMessage)
 }
 
-module.exports = {
-  name: 'server stats',
-  commands: [
+export const name = 'server stats'
+export const commands = [
     {
       name: 'stats',
       description: 'Displays server statistics',
@@ -47,12 +47,11 @@ module.exports = {
       maxArgs: 0,
       run: stats
     }
-  ],
-  jobs: [
+]
+export const jobs = [
     {
       period: 3600,
       job: refreshCache,
       runInstantly: true
     }
-  ]
-}
+]
