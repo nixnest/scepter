@@ -2,8 +2,9 @@
 
 const gulp = require('gulp')
 const mocha = require('gulp-mocha')
-const standard = require('gulp-standard')
-const tslint = require('gulp-tslint')
+const ts = require('typescript')
+const gulpTslint = require('gulp-tslint')
+const tslint = require('tslint')
 
 const CI = process.env.CI === 'true'
 
@@ -18,9 +19,12 @@ const paths = {
 const all = Array.prototype.concat.apply([], Object.keys(paths).map(x => paths[x]))
 
 function style () {
+  const program = tslint.Linter.createProgram("./tsconfig.json", ".")
+  ts.getPreEmitDiagnostics(program)
+
   return gulp.src(all.concat('./gulpfile.js'))
-    .pipe(tslint())
-    .pipe(tslint.report())
+    .pipe(gulpTslint({ program }))
+    .pipe(gulpTslint.report())
 }
 
 function unit () {

@@ -34,6 +34,8 @@ if (!process.env.DISCORD_TOKEN) {
   log.error('No Discord authentication token supplied. Set the DISCORD_TOKEN environment variable.')
 } else {
   client.login(process.env.DISCORD_TOKEN)
+    .then(console.log)
+    .catch(console.error)
 }
 
 interface Command {
@@ -74,11 +76,13 @@ const loadModule = (name: string) => {
         setInterval(() => x.job(client), x.period * 1000)
         if (x.runInstantly) {
           x.job(client)
+           .then(console.log)
+           .catch(log.error)
         }
       })
     }
     client['loadedModules'][name] = module
-  })
+  }).catch(log.error)
 }
 
 const parseArgs = (messageContent: string) => {
@@ -125,7 +129,7 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
 }
 
 client.on('ready', async () => {
-  client['botGuild'] = await client.guilds.get(process.env.BOT_GUILD)
+  client['botGuild'] = client.guilds.get(process.env.BOT_GUILD)
   log.info(`Logged in as ${client.user.tag}!`, client)
   fs.readdir('./modules/', (err, files) => {
     if (err) {
@@ -158,6 +162,7 @@ client.on('message', async (message: Message) => {
           const messageContentWithoutPrefixOrCommandName = message.content.substr(
             prefix.length + 1 + commandName.length)
           runCommand(message, command, parseArgs(messageContentWithoutPrefixOrCommandName))
+           .catch(console.error)
         }
       })
     })
