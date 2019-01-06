@@ -12,6 +12,7 @@ const entrypoint = require('./package.json')['main']
 const paths = {
   sources: ['./scepter.ts', 'lib/**/*.ts'],
   gulp: ['./gulpfile.js'],
+  modules: ['./modules/**/*'],
   tests: ['test/**/*.test.js'],
   testsSetup: ['./test/setup.js']
 }

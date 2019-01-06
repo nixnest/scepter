@@ -34,7 +34,6 @@ if (!process.env.DISCORD_TOKEN) {
   log.error('No Discord authentication token supplied. Set the DISCORD_TOKEN environment variable.')
 } else {
   client.login(process.env.DISCORD_TOKEN)
-    .then(console.log)
     .catch(console.error)
 }
 
@@ -161,8 +160,7 @@ client.on('message', async (message: Message) => {
         if (possibleNames.includes(commandName)) {
           const messageContentWithoutPrefixOrCommandName = message.content.substr(
             prefix.length + 1 + commandName.length)
-          runCommand(message, command, parseArgs(messageContentWithoutPrefixOrCommandName))
-           .catch(console.error)
+          await runCommand(message, command, parseArgs(messageContentWithoutPrefixOrCommandName))
         }
       })
     })
