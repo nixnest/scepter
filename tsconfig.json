@@ -11,6 +11,8 @@
   "include": [
     "./modules/**/*",
     "./lib/**/*",
-    "./scepter.ts"
-  ]
+    "./scepter.ts",
+    "./test/**/*",
+    "./gulpfile.js"
+  ],
 }

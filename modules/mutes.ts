@@ -27,7 +27,7 @@ export const checkMutes = async (client: Client) => {
     if (entry[1] === Infinity) continue
     if (curDate > entry[1]) {  // Unmute the user
       [clientGuildId, guildMemberId] = entry[0].split('.')
-      clientGuild = await client.guilds.get(clientGuildId)
+      clientGuild = client.guilds.get(clientGuildId)
       guildMember = await clientGuild.fetchMember(guildMemberId)
       muted = await mutedRole(clientGuild)
       await guildMember.removeRole(muted)
@@ -70,7 +70,7 @@ export const unmute = async (message: Message, args: string[]) => {
   let muteTargetId = message.mentions.users.first().id
   let muteRole = await getMutesRole(message)
   if (muteRole == null) {
-    return message.channel.send("You didn't set a mute role and I can't find a default one, dummy");
+    return message.channel.send("You didn't set a mute role and I can't find a default one, dummy")
   }
   let muteTarget = await message.guild.fetchMember(muteTargetId)
   await muteTarget.removeRole(muteRole)

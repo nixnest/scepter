@@ -19,14 +19,17 @@ export const log = async options => {
 }
 
 export const info = (message, client?) => {
+  // tslint:disable-next-line
   log({ type: 'Info', message, client })
 }
 
 export const warn = (message, client?) => {
+  // tslint:disable-next-line
   log({ type: 'Warning', message, client })
 }
 
 export const error = (message, client?) => {
+  // tslint:disable-next-line
   log({ type: 'Error', message, client })
-  throw new Error(message)
+  // throw new Error(message)  TODO: verify this, otherwise we get unhandled exceptions
 }
