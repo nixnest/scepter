@@ -31,5 +31,5 @@ export const warn = (message, client?) => {
 export const error = (message, client?) => {
   // tslint:disable-next-line
   log({ type: 'Error', message, client })
-  // throw new Error(message)  TODO: verify this, otherwise we get unhandled exceptions
+  throw new Error(message)
 }

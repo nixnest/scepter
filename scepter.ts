@@ -77,7 +77,7 @@ const loadModule = (name: string) => {
         if (x.runInstantly) {
           x.job(client)
            .then(console.log)
-           .catch(log.error)
+           .catch(log.warn)
         }
       })
     }
@@ -92,7 +92,7 @@ const loadModule = (name: string) => {
       })
     }
     client['loadedModules'][name] = module
-  }).catch(log.error)
+  }).catch(log.warn)
 }
 
 const parseArgs = (messageContent: string) => {
