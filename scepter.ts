@@ -64,7 +64,7 @@ interface Job {
 
 interface Module {
   name: string,
-  commands: Command[]
+  commands?: Command[]
   jobs?: Job[],
   events?: Event[]
 }
