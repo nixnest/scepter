@@ -168,7 +168,7 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
 
 client.on('ready', async () => {
   client['botGuild'] = client.guilds.get(process.env.BOT_GUILD)
-  log.info(`Logged in as ${client.user.tag}!`, client)
+  log.info(`Logged in as ${client.user.tag}! Add bot with https://discordapp.com/api/oauth2/authorize?client_id=${client.user.id}&scope=bot`, client)
   fs.readdir('./modules/', (err, files) => {
     if (err) {
       return log.error('Failed to load modules folder', client)
