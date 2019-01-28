@@ -31,12 +31,18 @@ if (!process.env.BOT_GUILD) {
   log.error('No Discord guild ID supplied. Set the BOT_GUILD environment variable.')
 }
 
+if (!process.env.OWNER_ID) {
+  log.error('No owner user Discord ID supplied. Set the OWNER_ID environment variable.')
+}
+
+client['ownerId'] = process.env.OWNER_ID
+
 if (!process.env.DISCORD_TOKEN) {
   log.error('No Discord authentication token supplied. Set the DISCORD_TOKEN environment variable.')
-} else {
-  client.login(process.env.DISCORD_TOKEN)
-    .catch(console.error)
 }
+
+client.login(process.env.DISCORD_TOKEN)
+      .catch(console.error)
 
 interface Command {
   name: string,
@@ -76,7 +82,6 @@ const loadModule = (name: string) => {
         setInterval(() => x.job(client), x.period * 1000)
         if (x.runInstantly) {
           x.job(client)
-           .then(console.log)
            .catch(log.warn)
         }
       })
@@ -126,15 +131,38 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
     return message.channel.send(
       `Too many arguments for \`${command.name}\`. (max: ${command.maxArgs}, `
       + `you might need to quote an argument) `)
-  } else if (args.length < command.minArgs) {
+  }
+  if (args.length < command.minArgs) {
     return message.channel.send(`Too few arguments for \`${command.name}\`. (min: ${command.minArgs})`)
-  } else {
-    try {
-      return await command.run(message, args)
-    } catch (e) {
-      await message.channel.send(`Error: \`${e}\``)
-      return log.warn(`\`${command.name} ${args}\` errored with \`${e}\``, message.client)
+  }
+  try {
+    // TODO: test if shit works with an empty permissionLevel
+    if (command.permissionLevel && command.permissionLevel > 0) {
+      switch (command.permissionLevel) {
+        case 1:
+          if (!message.member.hasPermission('MANAGE_MESSAGES')) {
+            return message.channel.send(`You don't have permission to execute this command, which requires the Manage Messages permission.`)
+          }
+          break
+        case 2:
+          if (!message.member.hasPermission('MANAGE_GUILD')) {
+            return message.channel.send(`You don't have permission to execute this command, which requires the Manage Server permission.`)
+          }
+          break
+        case 3:
+          if (message.author.id !== client['ownerId']) {
+            return message.channel.send(`You don't have permission to execute this command, which requires ownership of this bot.`)
+          }
+          break
+        default:
+          log.warn(`\`${command.name}\` has an invalid permissionLevel of ${command.permissionLevel}`, message.client)
+          return message.channel.send(`Internal error: invalid permissionLevel (${command.permissionLevel}) on command \`${command.name}\``)
+      }
     }
+    return await command.run(message, args)
+  } catch (e) {
+    await message.channel.send(`Error: \`${e}\``)
+    return log.warn(`\`${command.name} ${args}\` errored with \`${e}\``, message.client)
   }
 }
 
