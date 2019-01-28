@@ -185,9 +185,6 @@ client.on('ready', async () => {
 client.on('message', async (message: Message) => {
   await client['guildData'].ensure(message.guild.id, { prefix: 's.' })
   const prefix = await client['guildData'].get(message.guild.id, 'prefix')
-  // TODO: manage guild specific aliases here
-  // TODO: permission levels
-
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
     const commandName = message.content.split(prefix)[1].split(' ')[0]
     if (client['loadedCommands'][commandName]) {
