@@ -25,6 +25,7 @@ client['timerData'] = new Enmap({
 })
 
 client['loadedModules'] = {}
+client['loadedCommands'] = {}
 
 if (!process.env.BOT_GUILD) {
   log.error('No Discord guild ID supplied. Set the BOT_GUILD environment variable.')
@@ -80,6 +81,16 @@ const loadModule = (name: string) => {
         }
       })
     }
+    if (module.commands) {
+      module.commands.map(command => {
+        const possibleNames = command.aliases
+          ? command.aliases.concat([command.name])
+          : [command.name]
+        possibleNames.map(name => {
+          client['loadedCommands'][name] = command
+        })
+      })
+    } 
     client['loadedModules'][name] = module
   }).catch(log.error)
 }
@@ -149,20 +160,11 @@ client.on('message', async (message: Message) => {
   // TODO: manage guild specific aliases here
   // TODO: permission levels
 
-  // TODO: iterating over all the modules is SLOW, make a loadedCommands
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
-    Object.keys(client['loadedModules']).forEach(async moduleIndex => {
-      client['loadedModules'][moduleIndex].commands.forEach(async command => {
-        const commandName = message.content.split(prefix)[1].split(' ')[0]
-        const possibleNames = command.aliases
-          ? command.aliases.concat([command.name])
-          : [command.name]
-        if (possibleNames.includes(commandName)) {
-          const messageContentWithoutPrefixOrCommandName = message.content.substr(
-            prefix.length + 1 + commandName.length)
-          await runCommand(message, command, parseArgs(messageContentWithoutPrefixOrCommandName))
-        }
-      })
-    })
-  }
+    const commandName = message.content.split(prefix)[1].split(' ')[0]
+    if(client['loadedCommands'][commandName]) {
+      const messageContentWithoutPrefixOrCommandName = message.content.substr(prefix.length + 1 + commandName.length)
+      runCommand(message, client['loadedCommands'][commandName], parseArgs(messageContentWithoutPrefixOrCommandName))
+    }
+  } 
 })
