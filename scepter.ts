@@ -90,7 +90,7 @@ const loadModule = (name: string) => {
           client['loadedCommands'][name] = command
         })
       })
-    } 
+    }
     client['loadedModules'][name] = module
   }).catch(log.error)
 }
@@ -162,9 +162,9 @@ client.on('message', async (message: Message) => {
 
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
     const commandName = message.content.split(prefix)[1].split(' ')[0]
-    if(client['loadedCommands'][commandName]) {
+    if (client['loadedCommands'][commandName]) {
       const messageContentWithoutPrefixOrCommandName = message.content.substr(prefix.length + 1 + commandName.length)
-      runCommand(message, client['loadedCommands'][commandName], parseArgs(messageContentWithoutPrefixOrCommandName))
+      await runCommand(message, client['loadedCommands'][commandName], parseArgs(messageContentWithoutPrefixOrCommandName))
     }
-  } 
+  }
 })
