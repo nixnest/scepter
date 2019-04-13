@@ -20,15 +20,17 @@ let refreshCache = async (client: Client): Promise<void> => {
     const clientGuild = guild[1]  // First guild of the array is the current guild
     const guildData = {
       name: clientGuild.name,
-      creationDate : clientGuild.createdAt,
-      fields: [{
-        roles: clientGuild.roles.map(x => [x.id, x.name]),
-      },
-      {
-        channels: clientGuild.channels
-          .filter(x => x.type !== 'category')
-          .map(x => [x.id, x.name]),
-      }]
+      creationDate: clientGuild.createdAt,
+      fields: [
+        {
+          roles: clientGuild.roles.map(x => [x.id, x.name])
+        },
+        {
+          channels: clientGuild.channels
+            .filter(x => x.type !== 'category')
+            .map(x => [x.id, x.name])
+        }
+      ]
     }
     await client['guildData'].set(`${clientGuild.id}.stats`, guildData)
   }
