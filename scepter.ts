@@ -193,3 +193,7 @@ client.on('message', async (message: Message) => {
     }
   }
 })
+
+client.on('error', (err: Error) => {
+  log.warn(`Discord.js error: ${err}`)
+})
