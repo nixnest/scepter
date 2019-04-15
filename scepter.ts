@@ -59,7 +59,7 @@ interface Command {
 
 interface Event {
   trigger: string,
-  event (object: any): Promise<Message>  // TODO: is this correct? Verify with further examples
+  event (): Promise<void>  // TODO: is this correct? Verify with further examples
 }
 
 interface Job {
@@ -94,6 +94,11 @@ const loadModule = (name: string) => {
         possibleNames.map(name => {
           client['loadedCommands'][name] = command
         })
+      })
+    }
+    if (module.events) {
+      module.events.map((event: Event) => {
+        client.on(event.trigger, event.event)
       })
     }
     client['loadedModules'][name] = module
