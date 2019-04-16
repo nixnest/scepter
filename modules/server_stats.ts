@@ -1,5 +1,5 @@
 import { Message, Client, RichEmbed } from 'discord.js'
-import { allChannelsByCategory } from '../lib/channels';
+import { allChannelsByCategory } from '../lib/channels'
 
 const _buildEmbed = (embed: RichEmbed, data) => {
   const _buildRoles = (data) => {
@@ -12,7 +12,7 @@ const _buildEmbed = (embed: RichEmbed, data) => {
     embed.addField(key, '--------')
     const channelsData = Object.entries(data.fields.channels)
     channelsData.map(x => {
-      embed.addField(`${x[0]}:`, (x[1] as []).map(y => `${y[1]} (${y[0]}): ${y[2]}`));
+      embed.addField(`${x[0]}:`, (x[1] as []).map(y => `${y[1]} (${y[0]}): ${y[2]}`))
       // TODO: we have a types conflict here. Define a stats Type
     })
   }
@@ -37,8 +37,8 @@ const refreshCache = async (client: Client): Promise<void> => {
       name: clientGuild.name,
       creationDate: clientGuild.createdAt,
       fields: {
-          roles: clientGuild.roles.map(x => [x.id, x.name, x.members.size]),
-          channels: allChannelsByCategory(clientGuild.channels.array())
+        roles: clientGuild.roles.map(x => [x.id, x.name, x.members.size]),
+        channels: allChannelsByCategory(clientGuild.channels.array())
       }
     }
     await client['guildData'].set(`${clientGuild.id}.stats`, guildData)
