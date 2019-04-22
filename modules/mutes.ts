@@ -81,7 +81,7 @@ export const unmute = async (message: Message, args: string[]) => {
 export const newcomerMuteCheck = async (member: GuildMember) => {
   let muteRole = await getGuildMutesRole(member.guild)
   if (member.client['timerData'].has(`${member.guild.id}.${member.id}`)) {
-    member.addRole(muteRole)
+    await member.addRole(muteRole)
   }
 }
 
