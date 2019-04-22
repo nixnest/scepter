@@ -9,7 +9,7 @@ const getMutesRole = async (message: Message) => {
 }
 
 const getGuildMutesRole = async (guild: Guild): Promise<Role> => {
-  let role = client['guildData'].get(`${guild.id}.mutedRole`)
+  let role = guild.client['guildData'].get(`${guild.id}.mutedRole`)
   if (role == null) {
     role = guild.roles.find(x => x.name === 'muted')
   }
