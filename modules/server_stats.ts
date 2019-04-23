@@ -32,7 +32,7 @@ const buildEmbed = (data) => {
 
 const refreshCache = async (client: Client): Promise<void> => {
   for (let guild of client.guilds) {
-    const clientGuild = guild[1]  // First guild of the array is the current guild
+    const clientGuild = guild[1]
     const guildData = {
       name: clientGuild.name,
       creationDate: clientGuild.createdAt,
@@ -45,8 +45,8 @@ const refreshCache = async (client: Client): Promise<void> => {
   }
 }
 
-const stats = async (message: Message) => {
-  const embedMessage = buildEmbed(await message.client['guildData'].get(`${message.guild.id}.stats`))
+const stats = async (message: Message, _) => {
+  const embedMessage = buildEmbed(message.client['guildData'].get(`${message.guild.id}.stats`))
   return message.channel.send(embedMessage)
 }
 

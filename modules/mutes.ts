@@ -3,20 +3,20 @@ import { Client, Guild, GuildMember, Role, Message } from 'discord.js'
 const getMutesRole = async (message: Message) => {
   let muteRole = await message.client['guildData'].get(`${message.guild.id}.mutedRole`)
   if (muteRole == null) {
-    muteRole = message.guild.roles.find(r => r.name === 'mutes')
+    muteRole = message.guild.roles.find(r => r.name === 'muted')
   }
   return muteRole
 }
 
-export const checkMutes = async (client: Client) => {
-  let mutedRole = async (guild: Guild): Promise<Role> => {
-    let role = client['guildData'].get(`${guild.id}.mutedRole`)
-    if (role == null) {
-      role = guild.roles.find(x => x.name === 'mutes')
-    }
-    return role
+const getGuildMutesRole = async (guild: Guild): Promise<Role> => {
+  let role = guild.client['guildData'].get(`${guild.id}.mutedRole`)
+  if (role == null) {
+    role = guild.roles.find(x => x.name === 'muted')
   }
+  return role
+}
 
+export const checkMutes = async (client: Client) => {
   let curDate = new Date()
   let clientGuild: Guild
   let guildMember: GuildMember
@@ -29,7 +29,7 @@ export const checkMutes = async (client: Client) => {
       [clientGuildId, guildMemberId] = entry[0].split('.')
       clientGuild = client.guilds.get(clientGuildId)
       guildMember = await clientGuild.fetchMember(guildMemberId)
-      muted = await mutedRole(clientGuild)
+      muted = await getGuildMutesRole(clientGuild)
       await guildMember.removeRole(muted)
       delete client['timerData'][entry[0]]
     }
@@ -78,6 +78,26 @@ export const unmute = async (message: Message, args: string[]) => {
   return message.channel.send(`User ${args[0]} has been unmuted.`)
 }
 
+export const newcomerMuteCheck = async (member: GuildMember) => {
+  let muteRole = await getGuildMutesRole(member.guild)
+  if (member.client['timerData'].has(`${member.guild.id}.${member.id}`)) {
+    await member.addRole(muteRole)
+  }
+}
+
+export const processManualMute = async (previous: GuildMember, actual: GuildMember) => {
+  let muteRole = await getGuildMutesRole(actual.guild)
+  let isListed = actual.client['timerData'].has(`${actual.guild.id}.${actual.id}`)
+  let hadRole = previous.roles.has(muteRole.id)
+  let hasRole = actual.roles.has(muteRole.id)
+  if ((!isListed) && (!hadRole) && hasRole) {
+    await message.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
+  }
+  if (isListed && hadRole && (!hasRole)) {
+    await message.client['timerData'].delete(`${actual.guild.id}.${actual.id}`)
+  }
+}
+
 export const name = 'mute'
 export const commands = [
   {
@@ -118,5 +138,16 @@ export const jobs = [
   {
     period: 5,  // In seconds
     job: checkMutes
+  }
+]
+
+export const events = [
+  {
+    trigger: 'guildMemberAdd',
+    event: newcomerMuteCheck
+  },
+  {
+    trigger: 'guildMemberUpdate',
+    event: processManualMute
   }
 ]
