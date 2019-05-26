@@ -1,33 +1,19 @@
-import { Message, Client, RichEmbed } from 'discord.js'
+import { Message, Client, RichEmbed, MessageReaction, User } from 'discord.js'
 import { allChannelsByCategory } from '../lib/channels'
+import { paginableEmbeds, PaginableEmbed } from '../lib/embeds/paginable_embed'
+import { StatsPaginableEmbedBuilder } from '../lib/embeds/stats_embed_builder'
 
-const _buildEmbed = (embed: RichEmbed, data) => {
-  const _buildRoles = (data) => {
-    const key = 'roles'
-    embed.addField(key, data.fields[key].map(x => `${x[1]} (${x[0]}): ${x[2]} members`))
-  }
+const ALLOWED_REACTIONS = ['⬅', '➡']
 
-  const _buildChannels = (data) => {
-    const key = 'channels:'
-    embed.addField(key, '--------')
-    const channelsData = Object.entries(data.fields.channels)
-    channelsData.map(x => {
-      embed.addField(`${x[0]}:`, (x[1] as []).map(y => `${y[1]} (${y[0]}): ${y[2]}`))
-      // TODO: we have a types conflict here. Define a stats Type
-    })
-  }
-
-  embed.setTitle(`Server stats for ${data.name}`)
-  _buildRoles(data)
-  _buildChannels(data)
-  embed.setFooter(`Server created at ${data.creationDate}`)
-  return embed
-}
-
-const buildEmbed = (data) => {
-  // TODO: Export as generic function and define _buildEmbed requirements?
-  let embed = new RichEmbed()
-  return _buildEmbed(embed, data)
+const buildEmbed = (data): RichEmbed => {
+  return new StatsPaginableEmbedBuilder()
+               .setPerPage(3)  // TODO: make page size configurable at runtime?
+               .makeChannels(data)
+               .makeRoles(data)
+               .setPaginables()
+               .build()
+               .setTitle(`Server stats for ${data.name}`)
+               .setFooter(`Server created at ${data.creationDate}`)
 }
 
 const refreshCache = async (client: Client): Promise<void> => {
@@ -46,8 +32,36 @@ const refreshCache = async (client: Client): Promise<void> => {
 }
 
 const stats = async (message: Message, _) => {
-  const embedMessage = buildEmbed(message.client['guildData'].get(`${message.guild.id}.stats`))
-  return message.channel.send(embedMessage)
+  const guildStats = message.client['guildData'].get(`${message.guild.id}.stats`)
+  const embedMessage: RichEmbed = buildEmbed(guildStats)
+  const statsMessage: Message | Message[] = await message.channel.send(embedMessage)
+  await (statsMessage as Message).react('⬅')
+  await (statsMessage as Message).react('➡')
+  const statsMessageId: string = (statsMessage as Message).id
+  paginableEmbeds.set(`stats.${statsMessageId}`, embedMessage)  // Namespace the ID
+}
+
+const paginateEmbed = async (reaction: MessageReaction, user: User) => {
+  if (reaction.message.embeds.length === 0 ||  // We don't care about reactions on non-embeds here
+      user.bot ||  // Or bot reactions
+      !ALLOWED_REACTIONS.includes(reaction.emoji.name)) {  // or non-pagination ones
+    return
+  }
+
+  const messageId = reaction.message.id
+  const embedMessage: PaginableEmbed = paginableEmbeds.get(`stats.${messageId}`)
+  if (embedMessage == null) {  // Don't do anything for embeds no longer stored
+    return
+  }
+
+  const leftPaginate = reaction.message.reactions.filter(x => x.emoji.name === '⬅').first().count
+  const rightPaginate = reaction.message.reactions.filter(x => x.emoji.name === '➡').first().count
+  const index = Math.max(0, rightPaginate - leftPaginate)
+  const newContent = embedMessage.paginate(index)
+  newContent.forEach((val, idx) => {
+    reaction.message.embeds[0].fields[idx].value = val.reduce((acc, val) => acc += `${val}\n`, '')
+  })
+  await reaction.message.edit(new RichEmbed(reaction.message.embeds[0]))
 }
 
 export const name = 'server stats'
@@ -66,5 +80,12 @@ export const jobs = [
     period: 3600,
     job: refreshCache,
     runInstantly: true
+  }
+]
+
+export const events = [
+  {
+    trigger: 'messageReactionAdd',
+    event: paginateEmbed
   }
 ]

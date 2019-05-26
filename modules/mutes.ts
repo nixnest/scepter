@@ -91,10 +91,10 @@ export const processManualMute = async (previous: GuildMember, actual: GuildMemb
   let hadRole = previous.roles.has(muteRole.id)
   let hasRole = actual.roles.has(muteRole.id)
   if ((!isListed) && (!hadRole) && hasRole) {
-    await message.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
+    await actual.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
   }
   if (isListed && hadRole && (!hasRole)) {
-    await message.client['timerData'].delete(`${actual.guild.id}.${actual.id}`)
+    await actual.client['timerData'].delete(`${actual.guild.id}.${actual.id}`)
   }
 }
 
