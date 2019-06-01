@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv'
 import Enmap from 'enmap'
 import * as fs from 'fs'
 
-import * as log from './lib/log.js'
+import * as log from './lib/log'
 
 dotenv.config()
 const client = new Client()
@@ -75,7 +75,7 @@ interface Module {
   events?: Event[]
 }
 
-const loadModule = (name: string) => {
+export const loadModule = (name: string) => {
   import(`./modules/${name}`).then((module: Module) => {
     if (module.jobs) {
       module.jobs.map((x: Job) => {
@@ -102,7 +102,7 @@ const loadModule = (name: string) => {
       })
     }
     client['loadedModules'][name] = module
-  }).catch(log.warn)
+  }).catch(err => log.warn(err, client))
 }
 
 const parseArgs = (messageContent: string) => {
