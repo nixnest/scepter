@@ -6,7 +6,6 @@ import Enmap from 'enmap'
 import * as fs from 'fs'
 
 import * as log from './lib/log'
-import { commands } from './modules/mutes';
 
 dotenv.config()
 const client = new Client()
