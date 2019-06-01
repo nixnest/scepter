@@ -6,6 +6,7 @@ import Enmap from 'enmap'
 import * as fs from 'fs'
 
 import * as log from './lib/log'
+import { commands } from './modules/mutes';
 
 dotenv.config()
 const client = new Client()
@@ -65,7 +66,8 @@ interface Event {
 interface Job {
   period: number,
   runInstantly: boolean,
-  job (client: Client): Promise<void>
+  job (client: Client): Promise<void>,
+  interval: NodeJS.Timeout
 }
 
 interface Module {
@@ -79,7 +81,7 @@ export const loadModule = (name: string) => {
   import(`./modules/${name}`).then((module: Module) => {
     if (module.jobs) {
       module.jobs.map((x: Job) => {
-        setInterval(() => x.job(client), x.period * 1000)
+        x.interval = setInterval(() => x.job(client), x.period * 1000)
         if (x.runInstantly) {
           x.job(client)
            .catch(log.warn)
@@ -103,6 +105,38 @@ export const loadModule = (name: string) => {
     }
     client['loadedModules'][name] = module
   }).catch(err => log.warn(err, client))
+}
+
+export const unloadModule = (name: string) => {
+  const module = client['loadedModules'][name]
+  let possibleNames: string[]
+
+  if (module) {
+    if (module.jobs && module.jobs.length > 0) {
+      module.jobs.forEach((job: Job) => {
+        clearInterval(job.interval)
+      })
+    }
+
+    if (module.events && module.events.length > 0) {
+      module.events.forEach((event: Event) => {
+        client.removeListener(event.trigger, event.event)
+      })
+    }
+
+    if (module.commands && module.commands.length > 0) {
+      module.commands.forEach((command: Command) => {
+        possibleNames = command.aliases
+          ? command.aliases.concat([command.name])
+          : [command.name]
+        possibleNames.map(commandName => {
+          Reflect.deleteProperty(client['loadedCommands'], commandName)
+        })
+      })
+
+      Reflect.deleteProperty(client['loadedModules'], name)
+    }
+  }
 }
 
 const parseArgs = (messageContent: string) => {
