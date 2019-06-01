@@ -7,6 +7,12 @@ const loadModules = async (message: Message, args: string[]) => {
       await message.channel.send(`Module ${module} does not exist!`)
       return
     }
+
+    if (Object.keys(message.client['loadedModules']).includes(module)) {
+      await message.channel.send(`Module ${module} is already loaded. Not doing anything.`)
+      return
+    }
+
     loadModule(module)
     await message.channel.send(`Module ${module} is now available.`)
   })
@@ -16,6 +22,11 @@ const unloadModules = async (message: Message, args: string[]) => {
   args.forEach(async (module: string) => {
     if (!availableModules.includes(module)) {
       await message.channel.send(`Module ${module} does not exist!`)
+      return
+    }
+
+    if (!Object.keys(message.client['loadedModules']).includes(module)) {
+      await message.channel.send(`Module ${module} is already unloaded. Not doing anything.`)
       return
     }
     unloadModule(module)
