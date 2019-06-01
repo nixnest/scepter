@@ -25,7 +25,8 @@ export const checkMutes = async (client: Client) => {
   let muted: Role
   for (let entry of client['timerData'].entries()) {
     if (entry[1] === Infinity) continue
-    if (curDate > entry[1]) {  // Unmute the user
+    if (curDate > entry[1]) {
+      // Unmute the user
       [clientGuildId, guildMemberId] = entry[0].split('.')
       clientGuild = client.guilds.get(clientGuildId)
       guildMember = await clientGuild.fetchMember(guildMemberId)
@@ -90,11 +91,11 @@ export const processManualMute = async (previous: GuildMember, actual: GuildMemb
   let isListed = actual.client['timerData'].has(`${actual.guild.id}.${actual.id}`)
   let hadRole = previous.roles.has(muteRole.id)
   let hasRole = actual.roles.has(muteRole.id)
-  if ((!isListed) && (!hadRole) && hasRole) {
-    await message.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
+  if (!isListed && !hadRole && hasRole) {
+    await actual.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
   }
-  if (isListed && hadRole && (!hasRole)) {
-    await message.client['timerData'].delete(`${actual.guild.id}.${actual.id}`)
+  if (isListed && hadRole && !hasRole) {
+    await actual.client['timerData'].delete(`${actual.guild.id}.${actual.id}`)
   }
 }
 
@@ -136,7 +137,7 @@ export const commands = [
 
 export const jobs = [
   {
-    period: 5,  // In seconds
+    period: 5, // In seconds
     job: checkMutes
   }
 ]

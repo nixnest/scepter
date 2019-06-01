@@ -76,7 +76,11 @@ interface Module {
   events?: Event[]
 }
 
+export const availableModules: string[] = []
+
 export const loadModule = (name: string) => {
+  log.info(`Loading module ${name}`, client)
+
   import(`./modules/${name}`).then((module: Module) => {
     if (module.jobs) {
       module.jobs.map((x: Job) => {
@@ -213,7 +217,7 @@ client.on('ready', async () => {
     } else {
       files.forEach(file => {
         const name = file.split('.')[0]
-        log.info(`Loading module ${name}`, client)
+        availableModules.push(name)
         loadModule(name)
       })
     }

@@ -1,12 +1,26 @@
 import { Message } from 'discord.js'
-import { loadModule, unloadModule } from '../scepter'
+import { loadModule, unloadModule, availableModules } from '../scepter'
 
 const loadModules = async (message: Message, args: string[]) => {
-  args.forEach(loadModule)
+  args.forEach(async (module: string) => {
+    if (!availableModules.includes(module)) {
+      await message.channel.send(`Module ${module} does not exist!`)
+      return
+    }
+    loadModule(module)
+    await message.channel.send(`Module ${module} is now available.`)
+  })
 }
 
 const unloadModules = async (message: Message, args: string[]) => {
-  args.forEach(unloadModule)
+  args.forEach(async (module: string) => {
+    if (!availableModules.includes(module)) {
+      await message.channel.send(`Module ${module} does not exist!`)
+      return
+    }
+    unloadModule(module)
+    await message.channel.send(`Module ${module} has been unloaded.`)
+  })
 }
 
 export const name = 'runtime modules'
