@@ -65,7 +65,8 @@ type Event = {
 type Job = {
   period: number,
   runInstantly: boolean,
-  job (client: Client): Promise<void>
+  job (client: Client): Promise<void>,
+  interval: NodeJS.Timeout
 }
 
 type Module = {
@@ -75,11 +76,15 @@ type Module = {
   events?: Event[]
 }
 
-const loadModule = async (name: string) => {
+export const availableModules: string[] = []
+
+export const loadModule = (name: string) => {
+  log.info(`Loading module ${name}`, client)
+
   import(`./modules/${name}`).then((module: Module) => {
     if (module.jobs) {
       module.jobs.map((x: Job) => {
-        setInterval(() => x.job(client), x.period * 1000)
+        x.interval = setInterval(() => x.job(client), x.period * 1000)
         if (x.runInstantly) {
           x.job(client)
            .catch(log.warn)
@@ -102,7 +107,39 @@ const loadModule = async (name: string) => {
       })
     }
     client['loadedModules'][name] = module
-  }).catch(log.warn)
+  }).catch(err => log.warn(err, client))
+}
+
+export const unloadModule = (name: string) => {
+  const module = client['loadedModules'][name]
+  let possibleNames: string[]
+
+  if (module) {
+    if (module.jobs && module.jobs.length > 0) {
+      module.jobs.forEach((job: Job) => {
+        clearInterval(job.interval)
+      })
+    }
+
+    if (module.events && module.events.length > 0) {
+      module.events.forEach((event: Event) => {
+        client.removeListener(event.trigger, event.event)
+      })
+    }
+
+    if (module.commands && module.commands.length > 0) {
+      module.commands.forEach((command: Command) => {
+        possibleNames = command.aliases
+          ? command.aliases.concat([command.name])
+          : [command.name]
+        possibleNames.map(commandName => {
+          Reflect.deleteProperty(client['loadedCommands'], commandName)
+        })
+      })
+
+      Reflect.deleteProperty(client['loadedModules'], name)
+    }
+  }
 }
 
 const parseArgs = (messageContent: string) => {
@@ -180,8 +217,8 @@ client.on('ready', async () => {
     } else {
       files.forEach(async file => {
         const name = file.split('.')[0]
-        log.info(`Loading module ${name}`, client)
-        await loadModule(name)
+        availableModules.push(name)
+        loadModule(name)
       })
     }
   })
