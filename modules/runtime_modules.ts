@@ -34,6 +34,10 @@ const unloadModules = async (message: Message, args: string[]) => {
   })
 }
 
+const listModules = async (message: Message, _) => {
+  await message.channel.send(`List of available modules:\n**${availableModules.join(', ')}**`)
+}
+
 export const name = 'runtime modules'
 export const commands = [
   {
@@ -41,13 +45,26 @@ export const commands = [
     description: 'Attempts to load an available module',
     examples: ['loadmod echo'],
     minArgs: 1,
+    permissionLevel: 3,
+    aliases: ['modprobe'],
     run: loadModules
   },
   {
     name: 'unloadmod',
     description: 'Attempts to deactivate a loaded module',
-    exampled: ['unloadmod echo'],
+    examples: ['unloadmod echo'],
     minArgs: 1,
+    permissionLevel: 3,
+    aliases: ['rmmod'],
     run: unloadModules
+  },
+  {
+    name: 'listmods',
+    description: 'Displays all available modules',
+    examples: ['lsmod'],
+    permissionLevel: 3,
+    aliases: ['lsmod'],
+    maxArgs: 0,
+    run: listModules
   }
 ]
