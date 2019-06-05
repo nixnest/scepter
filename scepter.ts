@@ -44,7 +44,7 @@ if (!process.env.SCEPTER_DISCORD_TOKEN) {
 client.login(process.env.SCEPTER_DISCORD_TOKEN)
       .catch(console.error)
 
-interface Command {
+type Command = {
   name: string,
   description: string,
   examples: string[],
@@ -54,22 +54,22 @@ interface Command {
   secret?: boolean,
   cooldown?: number,
   aliases?: string[],
-  run (message: Message, args: string[]): Promise<Message>,
+  run (message: Message, args: string[]): Promise<Message>
 }
 
-interface Event {
+type Event = {
   trigger: string,
-  event (): Promise<void>  // TODO: is this correct? Verify with further examples
+  event (): Promise<any>  // TODO: is this correct? Verify with further examples
 }
 
-interface Job {
+type Job = {
   period: number,
   runInstantly: boolean,
   job (client: Client): Promise<void>,
   interval: NodeJS.Timeout
 }
 
-interface Module {
+type Module = {
   name: string,
   commands?: Command[]
   jobs?: Job[],
@@ -102,7 +102,7 @@ export const loadModule = (name: string) => {
       })
     }
     if (module.events) {
-      module.events.map((event: Event) => {
+      module.events.map(async (event: Event) => {
         client.on(event.trigger, event.event)
       })
     }
@@ -215,7 +215,7 @@ client.on('ready', async () => {
     if (err) {
       return log.error('Failed to load modules folder', client)
     } else {
-      files.forEach(file => {
+      files.forEach(async file => {
         const name = file.split('.')[0]
         availableModules.push(name)
         loadModule(name)
