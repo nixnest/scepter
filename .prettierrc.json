@@ -1,0 +1,13 @@
+{
+  "parser": "babylon",
+  "printWidth": 110,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "none",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "rangeStart": 0,
+  "rangeEnd": null
+}

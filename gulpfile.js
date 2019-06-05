@@ -20,7 +20,7 @@ const paths = {
 const all = Array.prototype.concat.apply([], Object.keys(paths).map(x => paths[x]))
 
 function style () {
-  const program = tslint.Linter.createProgram("./tsconfig.json", ".")
+  const program = tslint.Linter.createProgram('./tsconfig.json', '.')
   ts.getPreEmitDiagnostics(program)
 
   return gulp.src(all.concat('./gulpfile.js'))

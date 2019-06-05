@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv'
 import Enmap from 'enmap'
 import * as fs from 'fs'
 
-import * as log from './lib/log.js'
+import * as log from './lib/log'
 
 dotenv.config()
 const client = new Client()
@@ -27,24 +27,24 @@ client['timerData'] = new Enmap({
 client['loadedModules'] = {}
 client['loadedCommands'] = {}
 
-if (!process.env.BOT_GUILD) {
-  log.error('No Discord guild ID supplied. Set the BOT_GUILD environment variable.')
+if (!process.env.SCEPTER_BOT_GUILD) {
+  log.error('No Discord guild ID supplied. Set the SCEPTER_BOT_GUILD environment variable.')
 }
 
-if (!process.env.OWNER_ID) {
-  log.error('No owner user Discord ID supplied. Set the OWNER_ID environment variable.')
+if (!process.env.SCEPTER_OWNER_ID) {
+  log.error('No owner user Discord ID supplied. Set the SCEPTER_OWNER_ID environment variable.')
 }
 
-client['ownerId'] = process.env.OWNER_ID
+client['ownerId'] = process.env.SCEPTER_OWNER_ID
 
-if (!process.env.DISCORD_TOKEN) {
-  log.error('No Discord authentication token supplied. Set the DISCORD_TOKEN environment variable.')
+if (!process.env.SCEPTER_DISCORD_TOKEN) {
+  log.error('No Discord authentication token supplied. Set the SCEPTER_DISCORD_TOKEN environment variable.')
 }
 
-client.login(process.env.DISCORD_TOKEN)
+client.login(process.env.SCEPTER_DISCORD_TOKEN)
       .catch(console.error)
 
-interface Command {
+type Command = {
   name: string,
   description: string,
   examples: string[],
@@ -54,32 +54,37 @@ interface Command {
   secret?: boolean,
   cooldown?: number,
   aliases?: string[],
-  run (message: Message, args: string[]): Promise<Message>,
+  run (message: Message, args: string[]): Promise<Message>
 }
 
-interface Event {
+type Event = {
   trigger: string,
-  event (object: any): Promise<Message>  // TODO: is this correct? Verify with further examples
+  event (): Promise<any>  // TODO: is this correct? Verify with further examples
 }
 
-interface Job {
+type Job = {
   period: number,
   runInstantly: boolean,
-  job (client: Client): Promise<void>
+  job (client: Client): Promise<void>,
+  interval: NodeJS.Timeout
 }
 
-interface Module {
+type Module = {
   name: string,
   commands?: Command[]
   jobs?: Job[],
   events?: Event[]
 }
 
-const loadModule = (name: string) => {
+export const availableModules: string[] = []
+
+export const loadModule = (name: string) => {
+  log.info(`Loading module ${name}`, client)
+
   import(`./modules/${name}`).then((module: Module) => {
     if (module.jobs) {
       module.jobs.map((x: Job) => {
-        setInterval(() => x.job(client), x.period * 1000)
+        x.interval = setInterval(() => x.job(client), x.period * 1000)
         if (x.runInstantly) {
           x.job(client)
            .catch(log.warn)
@@ -96,8 +101,45 @@ const loadModule = (name: string) => {
         })
       })
     }
+    if (module.events) {
+      module.events.map(async (event: Event) => {
+        client.on(event.trigger, event.event)
+      })
+    }
     client['loadedModules'][name] = module
-  }).catch(log.warn)
+  }).catch(err => log.warn(err, client))
+}
+
+export const unloadModule = (name: string) => {
+  const module = client['loadedModules'][name]
+  let possibleNames: string[]
+
+  if (module) {
+    if (module.jobs && module.jobs.length > 0) {
+      module.jobs.forEach((job: Job) => {
+        clearInterval(job.interval)
+      })
+    }
+
+    if (module.events && module.events.length > 0) {
+      module.events.forEach((event: Event) => {
+        client.removeListener(event.trigger, event.event)
+      })
+    }
+
+    if (module.commands && module.commands.length > 0) {
+      module.commands.forEach((command: Command) => {
+        possibleNames = command.aliases
+          ? command.aliases.concat([command.name])
+          : [command.name]
+        possibleNames.map(commandName => {
+          Reflect.deleteProperty(client['loadedCommands'], commandName)
+        })
+      })
+
+      Reflect.deleteProperty(client['loadedModules'], name)
+    }
+  }
 }
 
 const parseArgs = (messageContent: string) => {
@@ -167,15 +209,15 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
 }
 
 client.on('ready', async () => {
-  client['botGuild'] = client.guilds.get(process.env.BOT_GUILD)
+  client['botGuild'] = client.guilds.get(process.env.SCEPTER_BOT_GUILD)
   log.info(`Logged in as ${client.user.tag}! Add bot with https://discordapp.com/api/oauth2/authorize?client_id=${client.user.id}&scope=bot`, client)
   fs.readdir('./modules/', (err, files) => {
     if (err) {
       return log.error('Failed to load modules folder', client)
     } else {
-      files.forEach(file => {
+      files.forEach(async file => {
         const name = file.split('.')[0]
-        log.info(`Loading module ${name}`, client)
+        availableModules.push(name)
         loadModule(name)
       })
     }
@@ -192,4 +234,8 @@ client.on('message', async (message: Message) => {
       await runCommand(message, client['loadedCommands'][commandName], parseArgs(messageContentWithoutPrefixOrCommandName))
     }
   }
+})
+
+client.on('error', (err: Error) => {
+  log.warn(`Discord.js error: ${err}`)
 })
