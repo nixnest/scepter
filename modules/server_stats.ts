@@ -34,10 +34,10 @@ const refreshCache = async (client: Client): Promise<void> => {
 const stats = async (message: Message, _) => {
   const guildStats = message.client['guildData'].get(`${message.guild.id}.stats`)
   const embedMessage: RichEmbed = buildEmbed(guildStats)
-  const statsMessage: Message | Message[] = await message.channel.send(embedMessage)
-  await (statsMessage as Message).react('⬅')
-  await (statsMessage as Message).react('➡')
-  const statsMessageId: string = (statsMessage as Message).id
+  const statsMessage: Message | Message[] = await message.channel.send(embedMessage) as Message
+  await statsMessage.react('⬅')
+  await statsMessage.react('➡')
+  const statsMessageId: string = statsMessage.id
   paginableEmbeds.set(`stats.${statsMessageId}`, embedMessage)  // Namespace the ID
   paginableEmbeds.set(`stats.${statsMessageId}.currentPage`, 0)  // Start on the first page
 }
