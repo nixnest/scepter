@@ -1,7 +1,6 @@
 import { PaginableEmbed } from './paginable_embed'
 
 export class StatsPaginableEmbed extends PaginableEmbed {
-
   channelData: Array<string>
   roleData: Array<string>
 

@@ -39,6 +39,7 @@ const stats = async (message: Message, _) => {
   await (statsMessage as Message).react('➡')
   const statsMessageId: string = (statsMessage as Message).id
   paginableEmbeds.set(`stats.${statsMessageId}`, embedMessage)  // Namespace the ID
+  paginableEmbeds.set(`stats.${statsMessageId}.currentPage`, 0)  // Start on the first page
 }
 
 const paginateEmbed = async (reaction: MessageReaction, user: User) => {
@@ -54,13 +55,20 @@ const paginateEmbed = async (reaction: MessageReaction, user: User) => {
     return
   }
 
+  let page = paginableEmbeds.get(`stats.${messageId}.currentPage`)
+
   const leftPaginate = reaction.message.reactions.filter(x => x.emoji.name === '⬅').first().count
   const rightPaginate = reaction.message.reactions.filter(x => x.emoji.name === '➡').first().count
-  const index = Math.max(0, rightPaginate - leftPaginate)
-  const newContent = embedMessage.paginate(index)
+
+  const pagination = rightPaginate - leftPaginate
+  const newPage = Math.min(Math.max(0, page + pagination), embedMessage.pagesCount)
+  const newContent = embedMessage.paginate(newPage)
+
   newContent.forEach((val, idx) => {
     reaction.message.embeds[0].fields[idx].value = val.reduce((acc, val) => acc += `${val}\n`, '')
   })
+  paginableEmbeds.set(`stats.${messageId}.currentPage`, newPage)
+
   await reaction.message.edit(new RichEmbed(reaction.message.embeds[0]))
 }
 
