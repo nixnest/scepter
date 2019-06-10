@@ -73,15 +73,19 @@ type Module = {
   name: string,
   commands?: Command[]
   jobs?: Job[],
-  events?: Event[]
+  events?: Event[],
+  loadOnBoot?: boolean
 }
 
 export const availableModules: string[] = []
 
 export const loadModule = (name: string) => {
-  log.info(`Loading module ${name}`, client)
 
   import(`./modules/${name}`).then((module: Module) => {
+    if (module.loadOnBoot != null && module.loadOnBoot === false) {
+      return
+    }
+    log.info(`Loading module ${name}`, client)
     if (module.jobs) {
       module.jobs.map((x: Job) => {
         x.interval = setInterval(() => x.job(client), x.period * 1000)
