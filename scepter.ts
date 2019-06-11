@@ -24,6 +24,10 @@ client['timerData'] = new Enmap({
   name: 'timers'
 })
 
+client['config'] = new Enmap({
+  name: 'runtimeConfig'
+})
+
 client['loadedModules'] = {}
 client['loadedCommands'] = {}
 
@@ -77,15 +81,32 @@ type Module = {
   loadOnBoot?: boolean
 }
 
+const savedModules: string[] = []
+
+const saveModule = (module: string) => {
+  if (!savedModules.includes(module)) {
+    savedModules.push(module)
+    client['config'].set('modules.loaded', savedModules)
+  }
+}
+
+const removeModule = (module: string) => {
+  if (savedModules.includes(module)) {
+    client['config'].set('modules.loaded', savedModules.filter(x => x !== module))
+  }
+}
+
 export const availableModules: string[] = []
 
 export const loadModule = (name: string, initial: boolean = false) => {
   import(`./modules/${name}`).then((module: Module) => {
-    if (initial && module.loadOnBoot != null && module.loadOnBoot === false) {
+    if (initial && module.loadOnBoot != null && module.loadOnBoot === false && !savedModules.includes(name)) {
       return
     }
 
     log.info(`Loading module ${name}`, client)
+
+    saveModule(name)
 
     if (module.jobs) {
       module.jobs.map((x: Job) => {
@@ -120,6 +141,7 @@ export const unloadModule = (name: string) => {
   let possibleNames: string[]
 
   if (module) {
+    removeModule(name)
     if (module.jobs && module.jobs.length > 0) {
       module.jobs.forEach((job: Job) => {
         clearInterval(job.interval)
@@ -216,6 +238,11 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
 client.on('ready', async () => {
   client['botGuild'] = client.guilds.get(process.env.SCEPTER_BOT_GUILD)
   log.info(`Logged in as ${client.user.tag}! Add bot with https://discordapp.com/api/oauth2/authorize?client_id=${client.user.id}&scope=bot`, client)
+
+  if (client['config'].has('modules.loaded')) {
+    savedModules.push(...client['config'].get('modules.loaded'))
+  }
+
   fs.readdir('./modules/', (err, files) => {
     if (err) {
       return log.error('Failed to load modules folder', client)
