@@ -16,7 +16,6 @@ const setColourRole = async (message: Message, args: string[]) => {
   message.member.roles.filter(x => HEX_COLOUR_REGEX.test(x.name))
         .forEach(role => message.member.removeRole(role))
   const currentRoles: Role[] = message.client['guildData'].get(`${message.guild.id}.roles`)
-  debugger
   let colourRole = currentRoles.find(x => x.name === hexColour)
   if (colourRole == null) {
     colourRole = await message.guild.createRole({
@@ -33,7 +32,6 @@ const setColourRole = async (message: Message, args: string[]) => {
 
 const refreshRoleCache = async (client: Client) => {
   let clientGuild: Guild
-  debugger
   for (let guild of client.guilds) {
     clientGuild = guild[1]
     client['guildData'].set(`${clientGuild.id}.roles`, [...clientGuild.roles.values()])
