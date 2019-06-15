@@ -1,6 +1,6 @@
 import { Message, Role, Client, Guild } from 'discord.js'
 
-const HEX_COLOUR_REGEX = new RegExp('^#?[0-9a-f]{6}$')
+const HEX_COLOUR_REGEX = new RegExp('^#?[0-9a-fA-F]{6}$')
 
 const setColourRole = async (message: Message, args: string[]) => {
   let hexColour: string = args[0]
@@ -13,6 +13,7 @@ const setColourRole = async (message: Message, args: string[]) => {
   if (hexColour.length > 6) {
     hexColour = hexColour.slice(1, 7)  // remove the pound sign
   }
+  hexColour = hexColour.toLowerCase()
   message.member.roles.filter(x => HEX_COLOUR_REGEX.test(x.name))
         .forEach(role => message.member.removeRole(role))
   const currentRoles: Role[] = message.client['guildData'].get(`${message.guild.id}.roles`)
@@ -27,7 +28,7 @@ const setColourRole = async (message: Message, args: string[]) => {
     )
   }
   await message.member.addRole(colourRole)
-
+  await message.channel.send(`Successfully applied colour #${hexColour.toUpperCase()}`)
 }
 
 const refreshRoleCache = async (client: Client) => {
