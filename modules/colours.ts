@@ -34,7 +34,10 @@ const refreshRoleCache = async (client: Client) => {
   let clientGuild: Guild
   for (let guild of client.guilds) {
     clientGuild = guild[1]
-    client['guildData'].set(`${clientGuild.id}.roles`, [...clientGuild.roles.values()])
+    client['guildData'].set(
+      `${clientGuild.id}.roles`,
+      [...clientGuild.roles.values()].filter(x => HEX_COLOUR_REGEX.test(x.name))
+    )
   }
 }
 
