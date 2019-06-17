@@ -1,4 +1,4 @@
-import { Message, Role, Client, Guild } from 'discord.js'
+import { Message, Role, Client, Guild, GuildMember } from 'discord.js'
 
 const HEX_COLOUR_REGEX = new RegExp('^#?[0-9a-fA-F]{6}$')
 
@@ -42,6 +42,12 @@ const refreshRoleCache = async (client: Client) => {
   }
 }
 
+const assignRandomColour = async (member: GuildMember) => {
+  const currentRoles = member.client['guildData'].get(`${member.guild.id}.roles`)
+  const randomColour: Role = currentRoles[Math.floor(Math.random() * currentRoles.length)]
+  await member.addRole(randomColour)
+}
+
 export const name = 'colour roles'
 export const loadOnBoot = false
 export const commands = [
@@ -59,5 +65,11 @@ export const jobs = [
     period: 3600,
     runInstantly: true,
     job: refreshRoleCache
+  }
+]
+export const events = [
+  {
+    trigger: 'guildMemberAdd',
+    event: assignRandomColour
   }
 ]
