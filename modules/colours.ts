@@ -4,20 +4,25 @@ const HEX_COLOUR_REGEX = new RegExp('^#?[0-9a-fA-F]{6}$')
 
 const setColourRole = async (message: Message, args: string[]) => {
   let hexColour: string = args[0]
+
   if (!HEX_COLOUR_REGEX.test(hexColour)) {
     return message.channel.send(`${hexColour} is not a valid colour for a role!`)
   }
+
   if (message.member.roles.map(x => x.name).includes(hexColour)) {
     return message.channel.send('You already have that colour!')
   }
+
   if (hexColour.length > 6) {
     hexColour = hexColour.slice(1, 7)  // remove the pound sign
   }
-  hexColour = hexColour.toLowerCase()
+
+  hexColour = hexColour.toLowerCase()  // normalize to avoid duplications
   message.member.roles.filter(x => HEX_COLOUR_REGEX.test(x.name))
-        .forEach(role => message.member.removeRole(role))
+                      .forEach(role => message.member.removeRole(role))
   const currentRoles: Role[] = message.client['guildData'].get(`${message.guild.id}.roles`)
-  let colourRole = currentRoles.find(x => x.name === hexColour)
+  let colourRole: Role | null = currentRoles.find(x => x.name === hexColour)
+
   if (colourRole == null) {
     colourRole = await message.guild.createRole({
       name: hexColour,
@@ -27,6 +32,7 @@ const setColourRole = async (message: Message, args: string[]) => {
       `${message.guild.id}.roles`, currentRoles.concat(colourRole)
     )
   }
+
   await message.member.addRole(colourRole)
   await message.channel.send(`Successfully applied colour #${hexColour.toUpperCase()}`)
 }
@@ -34,10 +40,10 @@ const setColourRole = async (message: Message, args: string[]) => {
 const refreshRoleCache = async (client: Client) => {
   let clientGuild: Guild
   for (let guild of client.guilds) {
-    clientGuild = guild[1]
+    clientGuild = guild[1]  // First element is the snowflake ID
     client['guildData'].set(
       `${clientGuild.id}.roles`,
-      [...clientGuild.roles.values()].filter(x => HEX_COLOUR_REGEX.test(x.name))
+      [...clientGuild.roles.values()].filter(x => HEX_COLOUR_REGEX.test(x.name))  // Only cache colour roles
     )
   }
 }
