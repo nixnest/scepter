@@ -1,17 +1,14 @@
 import { Client, Guild, GuildMember, Role, Message } from 'discord.js'
 
-const getMutesRole = async (message: Message) => {
-  let muteRole = await message.client['guildData'].get(`${message.guild.id}.mutedRole`)
-  if (muteRole == null) {
-    muteRole = message.guild.roles.find(r => r.name === 'muted')
-  }
-  return muteRole
-}
+import * as log from '../lib/log'
 
 const getGuildMutesRole = async (guild: Guild): Promise<Role> => {
   let role = guild.client['guildData'].get(`${guild.id}.mutedRole`)
   if (role == null) {
     role = guild.roles.find(x => x.name === 'muted')
+    if (role == null) {
+      throw new Error('No mutes role set and a default role could not be found.')
+    }
   }
   return role
 }
@@ -30,7 +27,12 @@ export const checkMutes = async (client: Client) => {
       [clientGuildId, guildMemberId] = entry[0].split('.')
       clientGuild = client.guilds.get(clientGuildId)
       guildMember = await clientGuild.fetchMember(guildMemberId)
-      muted = await getGuildMutesRole(clientGuild)
+      try {
+        muted = await getGuildMutesRole(clientGuild)
+      } catch (e) {
+        log.warn(e)
+        continue
+      }
       await guildMember.removeRole(muted)
       delete client['timerData'][entry[0]]
     }
@@ -56,10 +58,7 @@ export const mute = async (message: Message, args: string[]) => {
   let mutePeriod = args[1]
     ? new Date(curDate.setSeconds(curDate.getSeconds() + parseInt(args[1], 10)))
     : Infinity
-  const muteRole = await getMutesRole(message)
-  if (muteRole == null) {
-    return message.channel.send("You didn't set a mute role and I can't find a default one, dummy")
-  }
+  const muteRole = await getGuildMutesRole(message.guild)
   let muteTarget = await message.guild.fetchMember(muteTargetId)
   await muteTarget.addRole(muteRole)
   await message.client['timerData'].set(`${message.guild.id}.${muteTargetId}`, mutePeriod)
@@ -69,10 +68,7 @@ export const mute = async (message: Message, args: string[]) => {
 
 export const unmute = async (message: Message, args: string[]) => {
   let muteTargetId = message.mentions.users.first().id
-  let muteRole = await getMutesRole(message)
-  if (muteRole == null) {
-    return message.channel.send("You didn't set a mute role and I can't find a default one, dummy")
-  }
+  let muteRole = await getGuildMutesRole(message.guild)
   let muteTarget = await message.guild.fetchMember(muteTargetId)
   await muteTarget.removeRole(muteRole)
   message.client['timerData'].delete(`${message.guild.id}.${muteTargetId}`)
@@ -87,7 +83,13 @@ export const newcomerMuteCheck = async (member: GuildMember) => {
 }
 
 export const processManualMute = async (previous: GuildMember, actual: GuildMember) => {
-  let muteRole = await getGuildMutesRole(actual.guild)
+  let muteRole: Role | null
+  try {
+    muteRole = await getGuildMutesRole(actual.guild)
+  } catch (e) {
+    log.warn(e)
+    return
+  }
   let isListed = actual.client['timerData'].has(`${actual.guild.id}.${actual.id}`)
   let hadRole = previous.roles.has(muteRole.id)
   let hasRole = actual.roles.has(muteRole.id)
