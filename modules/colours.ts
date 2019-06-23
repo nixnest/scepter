@@ -54,6 +54,19 @@ const assignRandomColour = async (member: GuildMember) => {
   await member.addRole(randomColour)
 }
 
+const garbageCollectColours = async (client: Client) => {
+  let clientGuild: Guild
+  for (let guild of client.guilds) {
+    clientGuild = guild[1]
+    const roles: Role[] = [...clientGuild.roles.values()].filter(x => HEX_COLOUR_REGEX.test(x.name))
+    for (let role of roles) {
+      if ([...role.members.keys()].length === 0) {
+        await role.delete()
+      }
+    }
+  }
+}
+
 export const name = 'colour roles'
 export const loadOnBoot = false
 export const commands = [
@@ -71,6 +84,10 @@ export const jobs = [
     period: 3600,
     runInstantly: true,
     job: refreshRoleCache
+  },
+  {
+    period: 86400,
+    job: garbageCollectColours
   }
 ]
 export const events = [
