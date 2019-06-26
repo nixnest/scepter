@@ -26,7 +26,11 @@ export const checkMutes = async (client: Client) => {
       // Unmute the user
       [clientGuildId, guildMemberId] = entry[0].split('.')
       clientGuild = client.guilds.get(clientGuildId)
-      guildMember = await clientGuild.fetchMember(guildMemberId)
+      try {
+        guildMember = await clientGuild.fetchMember(guildMemberId)
+      } catch (e) {
+        continue
+      }
       try {
         muted = await getGuildMutesRole(clientGuild)
       } catch (e) {
