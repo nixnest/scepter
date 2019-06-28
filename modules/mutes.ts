@@ -1,4 +1,4 @@
-import { Client, Guild, GuildMember, Role, Message } from 'discord.js'
+import { Client, Guild, GuildMember, Role, Message, User } from 'discord.js'
 
 import * as log from '../lib/log'
 
@@ -105,6 +105,10 @@ export const processManualMute = async (previous: GuildMember, actual: GuildMemb
   }
 }
 
+const removeMuteFromBannedUser = async (guild: Guild, user: User) => {
+  await guild.client['timerData'].delete(`${guild.id}.${user.id}`)
+}
+
 export const name = 'mute'
 export const commands = [
   {
@@ -156,5 +160,9 @@ export const events = [
   {
     trigger: 'guildMemberUpdate',
     event: processManualMute
+  },
+  {
+    trigger: 'guildBanAdd',
+    event: removeMuteFromBannedUser
   }
 ]
