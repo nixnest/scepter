@@ -2,7 +2,7 @@ import { Client, Guild, GuildMember, Role, Message, User } from 'discord.js'
 
 import * as log from '../lib/log'
 
-const getGuildMutesRole = async (guild: Guild): Promise<Role> => {
+const _getGuildMutesRole = async (guild: Guild): Promise<Role> => {
   let role = guild.client['guildData'].get(`${guild.id}.mutedRole`)
   if (role == null) {
     role = guild.roles.find(x => x.name === 'muted')
@@ -13,7 +13,11 @@ const getGuildMutesRole = async (guild: Guild): Promise<Role> => {
   return role
 }
 
-export const checkMutes = async (client: Client) => {
+const _removeMemberFromMutes = async (client: Client, muteId: string) => {
+  await client['timerData'].delete(muteId)
+}
+
+const checkMutes = async (client: Client) => {
   let curDate = new Date()
   let clientGuild: Guild
   let guildMember: GuildMember
@@ -29,10 +33,11 @@ export const checkMutes = async (client: Client) => {
       try {
         guildMember = await clientGuild.fetchMember(guildMemberId)
       } catch (e) {
+        await _removeMemberFromMutes(client, `${clientGuild.id}.${guildMemberId}`)
         continue
       }
       try {
-        muted = await getGuildMutesRole(clientGuild)
+        muted = await _getGuildMutesRole(clientGuild)
       } catch (e) {
         log.warn(e)
         continue
@@ -43,7 +48,7 @@ export const checkMutes = async (client: Client) => {
   }
 }
 
-export const setMutedRole = async (message: Message, args: string[]) => {
+const setMutedRole = async (message: Message, args: string[]) => {
   let roleId = args[0]
   let roleName = message.guild.roles.get(roleId)
   let returnMessage: String
@@ -56,13 +61,13 @@ export const setMutedRole = async (message: Message, args: string[]) => {
   return message.channel.send(returnMessage)
 }
 
-export const mute = async (message: Message, args: string[]) => {
+const mute = async (message: Message, args: string[]) => {
   let muteTargetId = message.mentions.users.first().id
   let curDate = new Date()
   let mutePeriod = args[1]
     ? new Date(curDate.setSeconds(curDate.getSeconds() + parseInt(args[1], 10)))
     : Infinity
-  const muteRole = await getGuildMutesRole(message.guild)
+  const muteRole = await _getGuildMutesRole(message.guild)
   let muteTarget = await message.guild.fetchMember(muteTargetId)
   await muteTarget.addRole(muteRole)
   await message.client['timerData'].set(`${message.guild.id}.${muteTargetId}`, mutePeriod)
@@ -70,26 +75,26 @@ export const mute = async (message: Message, args: string[]) => {
   return message.channel.send(`User ${args[0]} has been muted ${mutePeriodText}.`)
 }
 
-export const unmute = async (message: Message, args: string[]) => {
+const unmute = async (message: Message, args: string[]) => {
   let muteTargetId = message.mentions.users.first().id
-  let muteRole = await getGuildMutesRole(message.guild)
+  let muteRole = await _getGuildMutesRole(message.guild)
   let muteTarget = await message.guild.fetchMember(muteTargetId)
   await muteTarget.removeRole(muteRole)
   message.client['timerData'].delete(`${message.guild.id}.${muteTargetId}`)
   return message.channel.send(`User ${args[0]} has been unmuted.`)
 }
 
-export const newcomerMuteCheck = async (member: GuildMember) => {
-  let muteRole = await getGuildMutesRole(member.guild)
+const newcomerMuteCheck = async (member: GuildMember) => {
+  let muteRole = await _getGuildMutesRole(member.guild)
   if (member.client['timerData'].has(`${member.guild.id}.${member.id}`)) {
     await member.addRole(muteRole)
   }
 }
 
-export const processManualMute = async (previous: GuildMember, actual: GuildMember) => {
+const processManualMute = async (previous: GuildMember, actual: GuildMember) => {
   let muteRole: Role | null
   try {
-    muteRole = await getGuildMutesRole(actual.guild)
+    muteRole = await _getGuildMutesRole(actual.guild)
   } catch (e) {
     log.warn(e)
     return
@@ -106,7 +111,7 @@ export const processManualMute = async (previous: GuildMember, actual: GuildMemb
 }
 
 const removeMuteFromBannedUser = async (guild: Guild, user: User) => {
-  await guild.client['timerData'].delete(`${guild.id}.${user.id}`)
+  return _removeMemberFromMutes(guild.client, `${guild.id}.${user.id}`)
 }
 
 export const name = 'mute'
