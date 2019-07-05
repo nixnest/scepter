@@ -258,12 +258,12 @@ client.on('ready', async () => {
 
 client.on('message', async (message: Message) => {
   await client['guildData'].ensure(message.guild.id, { prefix: 's.' })
-  const prefix = await client['guildData'].get(message.guild.id, 'prefix')
+  const prefix: string = await client['guildData'].get(message.guild.id, 'prefix')
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
-    const commandName = message.content.split(prefix)[1].split(' ')[0]
+    const commandName: string = message.content.split(prefix)[1].split(' ')[0]
     if (client['loadedCommands'][commandName]) {
-      const messageContentWithoutPrefixOrCommandName = message.content.substr(prefix.length + 1 + commandName.length)
-      await runCommand(message, client['loadedCommands'][commandName], parseArgs(messageContentWithoutPrefixOrCommandName))
+      const commandArgs: string = message.content.substr(prefix.length + 1 + commandName.length)
+      await runCommand(message, client['loadedCommands'][commandName], parseArgs(commandArgs))
     }
   }
 })
