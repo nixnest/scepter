@@ -24,6 +24,10 @@ client['timerData'] = new Enmap({
   name: 'timers'
 })
 
+client['config'] = new Enmap({
+  name: 'runtimeConfig'
+})
+
 client['loadedModules'] = {}
 client['loadedCommands'] = {}
 
@@ -31,11 +35,11 @@ if (!process.env.SCEPTER_BOT_GUILD) {
   log.error('No Discord guild ID supplied. Set the SCEPTER_BOT_GUILD environment variable.')
 }
 
-if (!process.env.SCEPTER_OWNER_ID) {
-  log.error('No owner user Discord ID supplied. Set the SCEPTER_OWNER_ID environment variable.')
+if (!process.env.SCEPTER_OWNER_IDS) {
+  log.error('No owner user Discord ID supplied. Set the SCEPTER_OWNER_IDS environment variable.')
 }
 
-client['ownerId'] = process.env.SCEPTER_OWNER_ID
+client['ownerIds'] = process.env.SCEPTER_OWNER_IDS
 
 if (!process.env.SCEPTER_DISCORD_TOKEN) {
   log.error('No Discord authentication token supplied. Set the SCEPTER_DISCORD_TOKEN environment variable.')
@@ -73,15 +77,37 @@ type Module = {
   name: string,
   commands?: Command[]
   jobs?: Job[],
-  events?: Event[]
+  events?: Event[],
+  loadOnBoot?: boolean
+}
+
+const savedModules: string[] = []
+
+const saveModule = (module: string) => {
+  if (!savedModules.includes(module)) {
+    savedModules.push(module)
+    client['config'].set('modules.loaded', savedModules)
+  }
+}
+
+const removeModule = (module: string) => {
+  if (savedModules.includes(module)) {
+    client['config'].set('modules.loaded', savedModules.filter(x => x !== module))
+  }
 }
 
 export const availableModules: string[] = []
 
-export const loadModule = (name: string) => {
-  log.info(`Loading module ${name}`, client)
-
+export const loadModule = (name: string, initial: boolean = false) => {
   import(`./modules/${name}`).then((module: Module) => {
+    if (initial && module.loadOnBoot != null && module.loadOnBoot === false && !savedModules.includes(name)) {
+      return
+    }
+
+    log.info(`Loading module ${name}`, client)
+
+    saveModule(name)
+
     if (module.jobs) {
       module.jobs.map((x: Job) => {
         x.interval = setInterval(() => x.job(client), x.period * 1000)
@@ -115,6 +141,7 @@ export const unloadModule = (name: string) => {
   let possibleNames: string[]
 
   if (module) {
+    removeModule(name)
     if (module.jobs && module.jobs.length > 0) {
       module.jobs.forEach((job: Job) => {
         clearInterval(job.interval)
@@ -192,7 +219,7 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
           }
           break
         case 3:
-          if (message.author.id !== client['ownerId']) {
+          if (!client['ownerIds'].split(',').includes(message.author.id)) {
             return message.channel.send(`You don't have permission to execute this command, which requires ownership of this bot.`)
           }
           break
@@ -211,6 +238,11 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
 client.on('ready', async () => {
   client['botGuild'] = client.guilds.get(process.env.SCEPTER_BOT_GUILD)
   log.info(`Logged in as ${client.user.tag}! Add bot with https://discordapp.com/api/oauth2/authorize?client_id=${client.user.id}&scope=bot`, client)
+
+  if (client['config'].has('modules.loaded')) {
+    savedModules.push(...client['config'].get('modules.loaded'))
+  }
+
   fs.readdir('./modules/', (err, files) => {
     if (err) {
       return log.error('Failed to load modules folder', client)
@@ -218,7 +250,7 @@ client.on('ready', async () => {
       files.forEach(async file => {
         const name = file.split('.')[0]
         availableModules.push(name)
-        loadModule(name)
+        loadModule(name, true)
       })
     }
   })
@@ -226,12 +258,12 @@ client.on('ready', async () => {
 
 client.on('message', async (message: Message) => {
   await client['guildData'].ensure(message.guild.id, { prefix: 's.' })
-  const prefix = await client['guildData'].get(message.guild.id, 'prefix')
+  const prefix: string = await client['guildData'].get(message.guild.id, 'prefix')
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
-    const commandName = message.content.split(prefix)[1].split(' ')[0]
+    const commandName: string = message.content.split(prefix)[1].split(' ')[0]
     if (client['loadedCommands'][commandName]) {
-      const messageContentWithoutPrefixOrCommandName = message.content.substr(prefix.length + 1 + commandName.length)
-      await runCommand(message, client['loadedCommands'][commandName], parseArgs(messageContentWithoutPrefixOrCommandName))
+      const commandArgs: string = message.content.substr(prefix.length + 1 + commandName.length)
+      await runCommand(message, client['loadedCommands'][commandName], parseArgs(commandArgs))
     }
   }
 })
