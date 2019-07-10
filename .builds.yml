@@ -1,0 +1,15 @@
+---
+image: alpine/edge
+packages:
+  - nodejs
+  - npm
+  - python2
+sources:
+  - "https://github.com/nixnest/scepter"
+tasks:
+  - setup: |
+      cd scepter
+      npm install
+  - test: |
+      cd scepter
+      npm test
