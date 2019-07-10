@@ -23,26 +23,36 @@ const checkMutes = async (client: Client) => {
   let guildMember: GuildMember
   let clientGuildId: string
   let guildMemberId: string
-  let muted: Role
+  let muteRole: Role
+
   for (let entry of client['timerData'].entries()) {
     if (entry[1] === Infinity) continue
     if (curDate > entry[1]) {
       // Unmute the user
       [clientGuildId, guildMemberId] = entry[0].split('.')
       clientGuild = client.guilds.get(clientGuildId)
+
       try {
         guildMember = await clientGuild.fetchMember(guildMemberId)
       } catch (e) {
         await _removeMemberFromMutes(client, `${clientGuild.id}.${guildMemberId}`)
         continue
       }
+
       try {
-        muted = await _getGuildMutesRole(clientGuild)
+        muteRole = await _getGuildMutesRole(clientGuild)
       } catch (e) {
         log.warn(e)
         continue
       }
-      await guildMember.removeRole(muted)
+
+      try {
+        await guildMember.removeRole(muteRole)
+      } catch (e) {
+        log.warn(`${name}.job: ${e}`)
+        return
+      }
+
       delete client['timerData'][entry[0]]
     }
   }
@@ -62,16 +72,22 @@ const setMutedRole = async (message: Message, args: string[]) => {
 }
 
 const mute = async (message: Message, args: string[]) => {
-  let muteTargetId = message.mentions.users.first().id
-  let curDate = new Date()
-  let mutePeriod = args[1]
+  const muteTargetId = message.mentions.users.first().id
+  const curDate = new Date()
+  const mutePeriod = args[1]
     ? new Date(curDate.setSeconds(curDate.getSeconds() + parseInt(args[1], 10)))
     : Infinity
-  const muteRole = await _getGuildMutesRole(message.guild)
-  let muteTarget = await message.guild.fetchMember(muteTargetId)
-  await muteTarget.addRole(muteRole)
+  const muteRole: Role = await _getGuildMutesRole(message.guild)
+  const muteTarget: GuildMember = await message.guild.fetchMember(muteTargetId)
+
+  try {
+    await muteTarget.addRole(muteRole)
+  } catch {
+    return message.channel.send("I don't have permission to manage roles!")
+  }
   await message.client['timerData'].set(`${message.guild.id}.${muteTargetId}`, mutePeriod)
-  let mutePeriodText = mutePeriod === Infinity ? 'indefinitely' : `for ${args[1]} seconds`
+
+  const mutePeriodText = mutePeriod === Infinity ? 'indefinitely' : `for ${args[1]} seconds`
   return message.channel.send(`User ${args[0]} has been muted ${mutePeriodText}.`)
 }
 
@@ -79,7 +95,13 @@ const unmute = async (message: Message, args: string[]) => {
   let muteTargetId = message.mentions.users.first().id
   let muteRole = await _getGuildMutesRole(message.guild)
   let muteTarget = await message.guild.fetchMember(muteTargetId)
-  await muteTarget.removeRole(muteRole)
+
+  try {
+    await muteTarget.removeRole(muteRole)
+  } catch {
+    return message.channel.send("I don't have permission to manage roles!")
+  }
+
   message.client['timerData'].delete(`${message.guild.id}.${muteTargetId}`)
   return message.channel.send(`User ${args[0]} has been unmuted.`)
 }
@@ -87,21 +109,29 @@ const unmute = async (message: Message, args: string[]) => {
 const newcomerMuteCheck = async (member: GuildMember) => {
   let muteRole = await _getGuildMutesRole(member.guild)
   if (member.client['timerData'].has(`${member.guild.id}.${member.id}`)) {
-    await member.addRole(muteRole)
+    try {
+      await member.addRole(muteRole)
+    } catch (e) {
+      log.warn(`${name}.newcomerMuteCheck: ${e}`)
+      return
+    }
   }
 }
 
 const processManualMute = async (previous: GuildMember, actual: GuildMember) => {
   let muteRole: Role | null
+
   try {
     muteRole = await _getGuildMutesRole(actual.guild)
   } catch (e) {
     log.warn(e)
     return
   }
+
   let isListed = actual.client['timerData'].has(`${actual.guild.id}.${actual.id}`)
   let hadRole = previous.roles.has(muteRole.id)
   let hasRole = actual.roles.has(muteRole.id)
+
   if (!isListed && !hadRole && hasRole) {
     await actual.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
   }

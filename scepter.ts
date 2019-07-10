@@ -35,11 +35,11 @@ if (!process.env.SCEPTER_BOT_GUILD) {
   log.error('No Discord guild ID supplied. Set the SCEPTER_BOT_GUILD environment variable.')
 }
 
-if (!process.env.SCEPTER_OWNER_ID) {
-  log.error('No owner user Discord ID supplied. Set the SCEPTER_OWNER_ID environment variable.')
+if (!process.env.SCEPTER_OWNER_IDS) {
+  log.error('No owner user Discord ID supplied. Set the SCEPTER_OWNER_IDS environment variable.')
 }
 
-client['ownerId'] = process.env.SCEPTER_OWNER_ID
+client['ownerIds'] = process.env.SCEPTER_OWNER_IDS
 
 if (!process.env.SCEPTER_DISCORD_TOKEN) {
   log.error('No Discord authentication token supplied. Set the SCEPTER_DISCORD_TOKEN environment variable.')
@@ -219,7 +219,7 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
           }
           break
         case 3:
-          if (message.author.id !== client['ownerId']) {
+          if (!client['ownerIds'].split(',').includes(message.author.id)) {
             return message.channel.send(`You don't have permission to execute this command, which requires ownership of this bot.`)
           }
           break
@@ -258,12 +258,12 @@ client.on('ready', async () => {
 
 client.on('message', async (message: Message) => {
   await client['guildData'].ensure(message.guild.id, { prefix: 's.' })
-  const prefix = await client['guildData'].get(message.guild.id, 'prefix')
+  const prefix: string = await client['guildData'].get(message.guild.id, 'prefix')
   if (message.content.startsWith(`${prefix}`) && !message.author.bot) {
-    const commandName = message.content.split(prefix)[1].split(' ')[0]
+    const commandName: string = message.content.split(prefix)[1].split(' ')[0]
     if (client['loadedCommands'][commandName]) {
-      const messageContentWithoutPrefixOrCommandName = message.content.substr(prefix.length + 1 + commandName.length)
-      await runCommand(message, client['loadedCommands'][commandName], parseArgs(messageContentWithoutPrefixOrCommandName))
+      const commandArgs: string = message.content.substr(prefix.length + 1 + commandName.length)
+      await runCommand(message, client['loadedCommands'][commandName], parseArgs(commandArgs))
     }
   }
 })
