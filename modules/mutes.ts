@@ -59,8 +59,8 @@ const checkMutes = async (client: Client) => {
 }
 
 const setMutedRole = async (message: Message, args: string[]) => {
-  let roleId = args[0]
-  let roleName = message.guild.roles.get(roleId)
+  const roleId = args[0]
+  const roleName = message.guild.roles.get(roleId)
   let returnMessage: String
   if (roleName) {
     await message.client['guildData'].set(`${message.guild.id}.mutedRole`, roleId)
@@ -92,9 +92,9 @@ const mute = async (message: Message, args: string[]) => {
 }
 
 const unmute = async (message: Message, args: string[]) => {
-  let muteTargetId = message.mentions.users.first().id
-  let muteRole = await _getGuildMutesRole(message.guild)
-  let muteTarget = await message.guild.fetchMember(muteTargetId)
+  const muteTargetId = message.mentions.users.first().id
+  const muteRole = await _getGuildMutesRole(message.guild)
+  const muteTarget = await message.guild.fetchMember(muteTargetId)
 
   try {
     await muteTarget.removeRole(muteRole)
@@ -107,7 +107,7 @@ const unmute = async (message: Message, args: string[]) => {
 }
 
 const newcomerMuteCheck = async (member: GuildMember) => {
-  let muteRole = await _getGuildMutesRole(member.guild)
+  const muteRole = await _getGuildMutesRole(member.guild)
   if (member.client['timerData'].has(`${member.guild.id}.${member.id}`)) {
     try {
       await member.addRole(muteRole)
@@ -128,9 +128,9 @@ const processManualMute = async (previous: GuildMember, actual: GuildMember) => 
     return
   }
 
-  let isListed = actual.client['timerData'].has(`${actual.guild.id}.${actual.id}`)
-  let hadRole = previous.roles.has(muteRole.id)
-  let hasRole = actual.roles.has(muteRole.id)
+  const isListed = actual.client['timerData'].has(`${actual.guild.id}.${actual.id}`)
+  const hadRole = previous.roles.has(muteRole.id)
+  const hasRole = actual.roles.has(muteRole.id)
 
   if (!isListed && !hadRole && hasRole) {
     await actual.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
