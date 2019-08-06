@@ -2,6 +2,8 @@ import { Client, Guild, GuildMember, Role, Message, User } from 'discord.js'
 
 import * as log from '../lib/log'
 
+const INDEFINITE_MUTE = Math.pow(2, 64)
+
 const _getGuildMutesRole = async (guild: Guild): Promise<Role> => {
   let role = guild.client['guildData'].get(`${guild.id}.mutedRole`)
   if (role == null) {
@@ -25,8 +27,10 @@ const checkMutes = async (client: Client) => {
   let guildMemberId: string
   let muteRole: Role
 
+  console.log(client['timerData'].entries())
+
   for (let entry of client['timerData'].entries()) {
-    if (entry[1] === Infinity) continue
+    if (entry[1] === INDEFINITE_MUTE) continue
     if (curDate > entry[1]) {
       // Unmute the user
       [clientGuildId, guildMemberId] = entry[0].split('.')
@@ -76,7 +80,7 @@ const mute = async (message: Message, args: string[]) => {
   const curDate = new Date()
   const mutePeriod = args[1]
     ? new Date(curDate.setSeconds(curDate.getSeconds() + parseInt(args[1], 10)))
-    : Infinity
+    : INDEFINITE_MUTE
   const muteRole: Role = await _getGuildMutesRole(message.guild)
   const muteTarget: GuildMember = await message.guild.fetchMember(muteTargetId)
 
@@ -87,7 +91,7 @@ const mute = async (message: Message, args: string[]) => {
   }
   await message.client['timerData'].set(`${message.guild.id}.${muteTargetId}`, mutePeriod)
 
-  const mutePeriodText = mutePeriod === Infinity ? 'indefinitely' : `for ${args[1]} seconds`
+  const mutePeriodText = mutePeriod === INDEFINITE_MUTE ? 'indefinitely' : `for ${args[1]} seconds`
   return message.channel.send(`User ${args[0]} has been muted ${mutePeriodText}.`)
 }
 
@@ -129,11 +133,11 @@ const processManualMute = async (previous: GuildMember, actual: GuildMember) => 
   }
 
   const isListed = actual.client['timerData'].has(`${actual.guild.id}.${actual.id}`)
-  const hadRole = previous.roles.has(muteRole.id)
-  const hasRole = actual.roles.has(muteRole.id)
+  const hadRole = previous.roles.has(muteRole.toString())
+  const hasRole = actual.roles.has(muteRole.toString())
 
   if (!isListed && !hadRole && hasRole) {
-    await actual.client['timerData'].set(`${actual.guild.id}.${actual.id}`, Infinity)
+    await actual.client['timerData'].set(`${actual.guild.id}.${actual.id}`, INDEFINITE_MUTE)
   }
   if (isListed && hadRole && !hasRole) {
     await actual.client['timerData'].delete(`${actual.guild.id}.${actual.id}`)
