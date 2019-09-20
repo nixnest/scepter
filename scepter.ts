@@ -215,7 +215,7 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
       // we can assume that any addition to the missingPermissions array
       // is an indicator of the lack of sufficient permissions
       if (missingPermissions.length > 0) {
-        let missingPermissionsFMT = `\`${missingPermissions.join("`, `")}\`` // connect all missing permissions together into a readable format
+        let missingPermissionsFMT = `\`${missingPermissions.join('`, `')}\`` // connect all missing permissions together into a readable format
         log.warn(`user \`${message.author.username}\`(id=${message.author.id}) attempted to fire \`${command.name}\` without the following permissions: ${missingPermissionsFMT}`, message.client)
         return message.reply(`Missing permissions for \`${command.name}\`: ${missingPermissionsFMT}`)
       }
