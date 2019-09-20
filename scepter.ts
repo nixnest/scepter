@@ -206,18 +206,18 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
   }
   try {
     if (command.permissions != null) { // check if any permissions are specified
-      let missing_permissions = []; // defining an array for all missing permissions
+      let missingPermissions = [] // defining an array for all missing permissions
       for (const permission of command.permissions) { // iterating over the permissions within the command definition
         if (!message.member.hasPermission(permission)) {
-          missing_permissions.push(permission); // adding missing permissions to the array
+          missingPermissions.push(permission) // adding missing permissions to the array
         }
       }
-      // we can assume that any addition to the missing_permissions array
+      // we can assume that any addition to the missingPermissions array
       // is an indicator of the lack of sufficient permissions
-      if (missing_permissions.length > 0) {
-        let missing_permissions_fmt = `\`${missing_permissions.join("`, `")}\``; // connect all missing permissions together into a readable format
-        log.warn(`user \`${message.author.username}\`(id=${message.author.id}) attempted to fire \`${command.name}\` without the following permissions: ${missing_permissions_fmt}`, message.client);
-        return message.reply(`Missing permissions for \`${command.name}\`: ${missing_permissions_fmt}`);
+      if (missingPermissions.length > 0) {
+        let missingPermissionsFMT = `\`${missingPermissions.join("`, `")}\`` // connect all missing permissions together into a readable format
+        log.warn(`user \`${message.author.username}\`(id=${message.author.id}) attempted to fire \`${command.name}\` without the following permissions: ${missingPermissionsFMT}`, message.client)
+        return message.reply(`Missing permissions for \`${command.name}\`: ${missingPermissionsFMT}`)
       }
     }
     return await command.run(message, args)
