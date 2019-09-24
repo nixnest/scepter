@@ -4,7 +4,7 @@ export const name = 'echo'
 export const commands = [
   {
     name: 'echo',
-    secret: false, // optional, default false unless permissionLevel is 3, then it's true
+    secret: false,
     description: 'Takes your input and spits it right back at you.', // required if not secret
     examples: ['yes'], // required if not secret
     aliases: [], // optional
