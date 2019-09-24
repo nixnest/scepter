@@ -9,7 +9,7 @@ export const commands = [
     examples: ['!flip => Tails'],
     minArgs: 0,
     run: async (message: Message) => {
-      let flip: string = flipC() + "!";
+      let flip: string = flipC() + '!';
       try {
     	return await message.reply(flip)
       } catch (e) {
@@ -23,8 +23,8 @@ export const commands = [
 function flipC(): string {
   let random: number = Math.round(Math.random())
   if (random === 1) {
-    return "Heads"
+    return 'Heads'
   } else {
-    return "Tails"
+    return 'Tails'
   }
 }
