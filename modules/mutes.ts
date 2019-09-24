@@ -27,8 +27,6 @@ const checkMutes = async (client: Client) => {
   let guildMemberId: string
   let muteRole: Role
 
-  console.log(client['timerData'].entries())
-
   for (let entry of client['timerData'].entries()) {
     if (entry[1] === INDEFINITE_MUTE) continue
     if (curDate > entry[1]) {
