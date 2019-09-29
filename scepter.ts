@@ -1,6 +1,6 @@
 'use strict'
 
-import { Client, Message } from 'discord.js'
+import { Client, Message, PermissionResolvable } from 'discord.js'
 import * as dotenv from 'dotenv'
 import Enmap from 'enmap'
 import * as fs from 'fs'
@@ -54,7 +54,7 @@ type Command = {
   examples: string[],
   minArgs: number
   maxArgs: number,
-  permissionLevel?: number,
+  permissions?: PermissionResolvable[],
   secret?: boolean,
   cooldown?: number,
   aliases?: string[],
@@ -205,27 +205,19 @@ const runCommand = async (message: Message, command: Command, args: string[]) =>
     return message.channel.send(`Too few arguments for \`${command.name}\`. (min: ${command.minArgs})`)
   }
   try {
-    // TODO: test if shit works with an empty permissionLevel
-    if (command.permissionLevel && command.permissionLevel > 0) {
-      switch (command.permissionLevel) {
-        case 1:
-          if (!message.member.hasPermission('MANAGE_MESSAGES')) {
-            return message.channel.send(`You don't have permission to execute this command, which requires the Manage Messages permission.`)
-          }
-          break
-        case 2:
-          if (!message.member.hasPermission('MANAGE_GUILD')) {
-            return message.channel.send(`You don't have permission to execute this command, which requires the Manage Server permission.`)
-          }
-          break
-        case 3:
-          if (!client['ownerIds'].split(',').includes(message.author.id)) {
-            return message.channel.send(`You don't have permission to execute this command, which requires ownership of this bot.`)
-          }
-          break
-        default:
-          log.warn(`\`${command.name}\` has an invalid permissionLevel of ${command.permissionLevel}`, message.client)
-          return message.channel.send(`Internal error: invalid permissionLevel (${command.permissionLevel}) on command \`${command.name}\``)
+    if (command.permissions != null) { // check if any permissions are specified
+      let missingPermissions = [] // defining an array for all missing permissions
+      for (const permission of command.permissions) { // iterating over the permissions within the command definition
+        if (!message.member.hasPermission(permission)) {
+          missingPermissions.push(permission) // adding missing permissions to the array
+        }
+      }
+      // we can assume that any addition to the missingPermissions array
+      // is an indicator of the lack of sufficient permissions
+      if (missingPermissions.length > 0) {
+        let missingPermissionsFMT = `\`${missingPermissions.join('`, `')}\`` // connect all missing permissions together into a readable format
+        log.warn(`user \`${message.author.username}\`(id=${message.author.id}) attempted to fire \`${command.name}\` without the following permissions: ${missingPermissionsFMT}`, message.client)
+        return message.reply(`Missing permissions for \`${command.name}\`: ${missingPermissionsFMT}`)
       }
     }
     return await command.run(message, args)
