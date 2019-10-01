@@ -5,7 +5,7 @@ import * as log from '../lib/log'
 const INDEFINITE_LITEMUTE = Math.pow(2, 64)
 
 const _getGuildLiteMutesRole = async (guild: Guild): Promise<Role> => {
-  let role = guild.client['guildData'].get(`${guild.id}.LiteMutedRole`)
+  let role = guild.client['guildData'].get(`${guild.id}.liteMutedRole`)
   if (role == null) {
     role = guild.roles.find(x => x.name === 'lite-muted')
     if (role == null) {
@@ -205,3 +205,5 @@ export const events = [
     event: removeLiteMuteFromBannedUser
   }
 ]
+
+export const loadOnBoot = false;
