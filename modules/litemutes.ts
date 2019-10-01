@@ -206,4 +206,4 @@ export const events = [
   }
 ]
 
-export const loadOnBoot = false;
+export const loadOnBoot = false
