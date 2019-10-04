@@ -242,7 +242,11 @@ client.on('ready', async () => {
       files.forEach(async file => {
         const name = file.split('.')[0]
         availableModules.push(name)
-        loadModule(name, true)
+        try {
+          loadModule(name, true)
+        } catch (e) {
+          log.warn(e)
+        }
       })
     }
   })
