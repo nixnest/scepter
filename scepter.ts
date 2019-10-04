@@ -78,7 +78,9 @@ type Module = {
   commands?: Command[]
   jobs?: Job[],
   events?: Event[],
-  loadOnBoot?: boolean
+  loadOnBoot?: boolean,
+  onLoad? (): boolean,
+  onUnload? (): boolean
 }
 
 const savedModules: string[] = []
@@ -105,6 +107,10 @@ export const loadModule = (name: string, initial: boolean = false) => {
     }
 
     log.info(`Loading module ${name}`, client)
+
+    if (module.onLoad != null) {
+      module.onLoad()
+    }
 
     saveModule(name)
 
@@ -137,10 +143,13 @@ export const loadModule = (name: string, initial: boolean = false) => {
 }
 
 export const unloadModule = (name: string) => {
-  const module = client['loadedModules'][name]
+  const module: Module = client['loadedModules'][name]
   let possibleNames: string[]
 
   if (module) {
+    if (module.onUnload != null) {
+      module.onUnload()
+    }
     removeModule(name)
     if (module.jobs && module.jobs.length > 0) {
       module.jobs.forEach((job: Job) => {
