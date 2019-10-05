@@ -79,8 +79,8 @@ type Module = {
   jobs?: Job[],
   events?: Event[],
   loadOnBoot?: boolean,
-  onLoad? (): boolean,
-  onUnload? (): boolean
+  onLoad? (client?: Client): boolean,
+  onUnload? (client?: Client): boolean
 }
 
 const savedModules: string[] = []
@@ -109,7 +109,7 @@ export const loadModule = (name: string, initial: boolean = false) => {
     log.info(`Loading module ${name}`, client)
 
     if (module.onLoad != null) {
-      module.onLoad()
+      module.onLoad(client)
     }
 
     saveModule(name)
@@ -148,7 +148,7 @@ export const unloadModule = (name: string) => {
 
   if (module) {
     if (module.onUnload != null) {
-      module.onUnload()
+      module.onUnload(client)
     }
     removeModule(name)
     if (module.jobs && module.jobs.length > 0) {
