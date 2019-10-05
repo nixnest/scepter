@@ -1,5 +1,6 @@
 import { Message } from 'discord.js'
 import { loadModule, unloadModule, availableModules } from '../scepter'
+import * as log from '../lib/log'
 
 const loadModules = async (message: Message, args: string[]) => {
   args.forEach(async (module: string) => {
@@ -29,7 +30,11 @@ const unloadModules = async (message: Message, args: string[]) => {
       await message.channel.send(`Module ${module} is already unloaded. Not doing anything.`)
       return
     }
-    unloadModule(module)
+    try {
+      unloadModule(module)
+    } catch (e) {
+      log.error(e)
+    }
     await message.channel.send(`Module ${module} has been unloaded.`)
   })
 }
