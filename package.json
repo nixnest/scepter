@@ -8,7 +8,8 @@
     "unit": "gulp unit",
     "style": "gulp style",
     "fix": "standard --fix",
-    "start": "tsc && node build/scepter.js",
+    "build": "tsc",
+    "start": "npm run build && node build/scepter.js",
     "dev:debug": "nodemon --inspect scepter.ts"
   },
   "husky": {

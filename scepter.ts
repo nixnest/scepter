@@ -6,6 +6,7 @@ import Enmap from 'enmap'
 import * as fs from 'fs'
 
 import * as log from './lib/log'
+import { MODULE_ERRORS } from './lib/errors/module'
 
 dotenv.config()
 const client = new Client()
@@ -78,7 +79,9 @@ type Module = {
   commands?: Command[]
   jobs?: Job[],
   events?: Event[],
-  loadOnBoot?: boolean
+  loadOnBoot?: boolean,
+  onLoad? (client?: Client): void,
+  onUnload? (client?: Client): void
 }
 
 const savedModules: string[] = []
@@ -105,6 +108,18 @@ export const loadModule = (name: string, initial: boolean = false) => {
     }
 
     log.info(`Loading module ${name}`, client)
+
+    if (module.onLoad != null) {
+      try {
+        module.onLoad(client)
+      } catch (e) {
+        if (MODULE_ERRORS.includes(e.name)) {
+          log.warn(`Problem loading ${name}: ${e}`)
+          return
+        }
+        log.error(`Unexpected error loading ${name}: ${e}`)
+      }
+    }
 
     saveModule(name)
 
@@ -137,10 +152,21 @@ export const loadModule = (name: string, initial: boolean = false) => {
 }
 
 export const unloadModule = (name: string) => {
-  const module = client['loadedModules'][name]
+  const module: Module = client['loadedModules'][name]
   let possibleNames: string[]
 
   if (module) {
+    if (module.onUnload != null) {
+      try {
+        module.onUnload(client)
+      } catch (e) {
+        if (MODULE_ERRORS.includes(e.name)) {
+          log.warn(`Problem loading ${name}: ${e}`)
+          return
+        }
+        log.error(`Unexpected error loading ${name}: ${e}`)
+      }
+    }
     removeModule(name)
     if (module.jobs && module.jobs.length > 0) {
       module.jobs.forEach((job: Job) => {

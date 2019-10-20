@@ -20,7 +20,7 @@ export const commands = [
 ]
 
 // returns a random "Heads" or "Tails"
-function flipC(): string {
+function flipC (): string {
   let random: number = Math.round(Math.random())
   if (random === 1) {
     return 'Heads'
