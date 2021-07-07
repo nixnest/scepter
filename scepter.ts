@@ -49,7 +49,7 @@ if (!process.env.SCEPTER_DISCORD_TOKEN) {
 client.login(process.env.SCEPTER_DISCORD_TOKEN)
       .catch(console.error)
 
-type Command = {
+export type Command = {
   name: string,
   description: string,
   examples: string[],
